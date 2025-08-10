@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planilla de Siniestros - García & Asociados</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px; margin: 0 auto; background: white; border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white; padding: 30px; text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header p { font-size: 1.1em; opacity: 0.9; }
+        .main-content { padding: 30px; }
+        .dashboard {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px; margin-bottom: 40px;
+        }
+        .card {
+            background: white; border-radius: 12px; padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1); border: 1px solid #e0e0e0;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.15); }
+        .card h3 {
+            color: #2c3e50; margin-bottom: 20px; font-size: 1.3em;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .icon { width: 24px; height: 24px; fill: currentColor; }
+        .today-reviews { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); color: white; }
+        .overdue-reviews { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; }
+        .pending-reviews { background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%); color: white; }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; padding: 12px 24px; border-radius: 8px;
+            cursor: pointer; font-size: 1em; transition: all 0.3s ease; margin: 5px;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4); }
+        .btn-success { background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); }
+        .btn-info { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); }
+        .btn-danger { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
+        .btn-warning { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); }
+        .btn-sm { padding: 8px 16px; font-size: 0.9em; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 12px; border: 2px solid #e0e0e0;
+            border-radius: 8px; font-size: 1em; transition: border-color 0.3s ease;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .reviews-list { max-height: 400px; overflow-y: auto; }
+        .review-item {
+            background: #f8f9fa; border-left: 4px solid #667eea; padding: 15px;
+            margin-bottom: 10px; border-radius: 0 8px 8px 0; transition: all 0.3s ease;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .review-item-content { flex-grow: 1; cursor: pointer; }
+        .review-item.completed .review-item-content { text-decoration: line-through; opacity: 0.6; }
+        .review-item.completed { border-left-color: #2ecc71; background-color: #f2fdf5; }
+        .review-item:hover { background: #e8f2ff; transform: translateX(5px); }
+        .review-item.today { border-left-color: #e74c3c; background: #fff5f5; }
+        .review-item.overdue { border-left-color: #f39c12; background: #fef9e7; }
+        .review-date { font-weight: 600; color: #2c3e50; font-size: 1.1em; }
+        .review-client { font-size: 1em; color: #667eea; margin: 5px 0; }
+        .review-obs { font-size: 0.9em; color: #666; font-style: italic; }
+        .complete-btn {
+            background: #e0e0e0; border: none; width: 30px; height: 30px;
+            border-radius: 50%; cursor: pointer; transition: all 0.3s ease;
+            font-size: 16px; flex-shrink: 0;
+        }
+        .complete-btn:hover { background: #c0c0c0; }
+        .review-item.completed .complete-btn { background: #2ecc71; color: white; }
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1000;
+        }
+        .modal.active { display: flex; align-items: center; justify-content: center; }
+        .modal-content {
+            background: white; border-radius: 15px; padding: 30px; width: 95%;
+            max-width: 900px; max-height: 90vh; overflow-y: auto; animation: modalSlide 0.3s ease;
+        }
+        @keyframes modalSlide { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .client-info { background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        .client-info h4 { color: #2c3e50; margin-bottom: 15px; font-size: 1.2em; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .info-grid.full-width > .info-item { grid-column: 1 / -1; }
+        .info-item { background: white; padding: 12px; border-radius: 5px; border-left: 3px solid #667eea; }
+        .info-label { font-size: 0.8em; color: #666; text-transform: uppercase; font-weight: 600; }
+        .info-value { font-size: 1em; color: #2c3e50; margin-top: 2px; font-weight: 500; }
+        .editable-field { cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: background-color 0.3s ease; min-height: 20px; }
+        .editable-field:hover { background-color: #e8f4fd; color: #2980b9; }
+        .observations-history { margin-top: 20px; }
+        .obs-item { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 10px; position: relative; }
+        .obs-date { font-size: 0.9em; color: #667eea; font-weight: 600; margin-bottom: 5px; }
+        .obs-text { color: #2c3e50; }
+        .obs-revision-date { font-size: 0.8em; color: #c0392b; margin-top: 5px; font-weight: 500; }
+        .close { float: right; font-size: 28px; font-weight: bold; color: #aaa; cursor: pointer; line-height: 1; }
+        .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; justify-content: center; }
+        .data-status {
+            background: #d4edda; border: 1px solid #c3e6cb; color: #155724;
+            padding: 10px; border-radius: 8px; margin-bottom: 20px; text-align: center;
+        }
+        .filter-bar {
+            background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;
+        }
+        .form-section { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-top: 20px; }
+        .form-section h4 { color: #2c3e50; margin-bottom: 15px; font-size: 1.2em; }
+        .document-list { list-style: none; padding: 0; max-height: 250px; overflow-y: auto; }
+        .document-list li { background: #f1f3f5; padding: 10px; border-radius: 5px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .document-list a { color: #3498db; text-decoration: none; font-weight: 500; word-break: break-all; }
+        .document-list a:hover { text-decoration: underline; }
+        .document-list .btn-sm { flex-shrink: 0; margin-left: 10px; }
+        .document-list .spinner { display: block; margin: 20px auto; width: 30px; height: 30px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @media (max-width: 768px) { .dashboard, .filter-bar, .info-grid { grid-template-columns: 1fr; } .main-content { padding: 20px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Planilla de Siniestros</h1>
+            <p>García & Asociados - Gestión de Reclamos y Seguros</p>
+        </div>
+
+        <div class="main-content">
+            <div id="dataStatus" class="data-status">Cargando datos...</div>
+            <div id="driveStatus" class="data-status" style="margin-top: -10px; display: none;"></div>
+
+            <!-- DASHBOARD DE TAREAS -->
+            <div class="dashboard">
+                <div class="card today-reviews">
+                    <h3><svg class="icon" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>Revisiones de Hoy</h3>
+                    <div class="reviews-list" id="todayReviews"></div>
+                </div>
+                <div class="card overdue-reviews">
+                    <h3><svg class="icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>Revisiones Vencidas</h3>
+                    <div class="reviews-list" id="overdueReviews"></div>
+                </div>
+                <div class="card pending-reviews">
+                    <h3><svg class="icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>Próximas Revisiones</h3>
+                    <div class="reviews-list" id="upcomingReviews"></div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 30px;">
+                <button class="btn btn-success" onclick="showNewSiniestroModal()">➕ Agregar Siniestro</button>
+                <button class="btn" onclick="showSiniestroSelectorModal()">👁️ Ver/Editar Siniestro</button>
+                <button class="btn" onclick="exportToExcel()">📊 Exportar a Excel</button>
+                <button class="btn" onclick="exportData()">💾 Exportar JSON</button>
+                <button class="btn btn-warning" onclick="importData()">📥 Importar Datos</button>
+            </div>
+            
+            <!-- BOTONES DE GOOGLE DRIVE -->
+            <div style="text-align: center; margin-bottom: 30px; border-top: 1px solid #ddd; padding-top: 20px;">
+                <button id="connectDriveBtn" class="btn">🔗 Conectar a Drive</button>
+                <button id="saveToDriveBtn" class="btn btn-success" style="display:none;">📤 Guardar en Drive</button>
+                <button id="loadFromDriveBtn" class="btn btn-warning" style="display:none;">📥 Cargar de Drive</button>
+            </div>
+
+            <div class="filter-bar">
+                <div class="form-group"><label>Búsqueda General</label><input type="text" id="searchInput" placeholder="Buscar por cliente, DNI, reclamo, etc." onkeyup="renderAllSiniestrosList()"></div>
+                <div class="form-group"><label>Filtrar por Estado</label><select id="estadoFilter" onchange="renderAllSiniestrosList()"><option value="">Todos los estados</option><option value="RECHAZADO">Rechazado</option><option value="FINALIZADA">Finalizada</option><option value="FINALIZADA P">Finalizada P</option><option value="EJECUCION">Ejecución</option><option value="DEMORADA">Demorada</option></select></div>
+            </div>
+
+            <div class="card">
+                <h3>📋 Todos los Siniestros (Ordenados por fecha de revisión)</h3>
+                <div class="reviews-list" id="allSiniestros" style="max-height: 600px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="importInput" accept=".json" style="display: none;" onchange="handleImport(event)">
+    <input type="file" id="documentUploadInput" style="display: none;">
+
+    <div id="newSiniestroModal" class="modal"><div class="modal-content"></div></div>
+    <div id="siniestroSelectorModal" class="modal"><div class="modal-content"></div></div>
+    <div id="siniestroInfoModal" class="modal"><div class="modal-content"></div></div>
+    <div id="documentModal" class="modal"><div class="modal-content"></div></div>
+    
+    <script>
+        // DATOS INICIALES (TU EXCEL)
+        const initialData = [{"id":"SINIESTRO_1_1735933845000","fecha":"","cliente":"GONCALVES BEATRIZ","dni":"22108382","celular":"1164233680","aseguradoEn":"RIVADAVIA","contra":"ORBIS","numeroReclamo":"232644","observacion":"SE INFORMO A CLIENTE QUE NO SE DARA RESOLUCION POR ORBIS NO DA RESPUESTA","fechaRevision":"","estado":"RECHAZADO","acuerdo":"","fechaPago":"","presupuesto":1140000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_1","fecha":"2025-04-30","texto":"SE INFORMO A CLIENTE QUE NO SE DARA RESOLUCION POR ORBIS NO DA RESPUESTA","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_2_1735933845001","fecha":"2025-05-06","cliente":"GRANADO MIGUEL ANGEL","dni":"21543471","celular":"1173653571","aseguradoEn":"COPAN","contra":"ZURICH","numeroReclamo":"0","observacion":"SE INFOMO A CLIENTE QUE ZURICH NO CUBRE EL PARABRISAS","fechaRevision":"","estado":"RECHAZADO","acuerdo":"","fechaPago":"","presupuesto":285999.99,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_2","fecha":"2025-05-20","texto":"SE INFOMO A CLIENTE QUE ZURICH NO CUBRE EL PARABRISAS","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_3_1735933845002","fecha":"","cliente":"SILGUEIRO VICTOR","dni":"34566518","celular":"","aseguradoEn":"FEDERACION","contra":"LA CAJA","numeroReclamo":"54000113645","observacion":"SE FUE CON NEMESIS","fechaRevision":"","estado":"RECHAZADO","acuerdo":"","fechaPago":"","presupuesto":1074000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_3","fecha":"2025-05-26","texto":"SE FUE CON NEMESIS","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_4_1735933845003","fecha":"","cliente":"GALEPPI SUSANA","dni":"11130200","celular":"1151388650","aseguradoEn":"GALENO","contra":"SAN CRISTÓBAL","numeroReclamo":"UC368744","observacion":"NO HIZO LA DENUECIA LE 3RO","fechaRevision":"","estado":"RECHAZADO","acuerdo":"","fechaPago":"","presupuesto":530000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_4","fecha":"2025-05-26","texto":"NO HIZO LA DENUECIA LE 3RO","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_5_1735933845004","fecha":"2025-04-01","cliente":"ALVAREZ CLAUDIA","dni":"28456789","celular":"1145678901","aseguradoEn":"COPAN","contra":"FEDERACION","numeroReclamo":"CP2025001","observacion":"PERITAJE REALIZADO, ESPERANDO LIQUIDACION","fechaRevision":"2025-05-01","estado":"EJECUCION","acuerdo":"","fechaPago":"","presupuesto":890000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_5","fecha":"2025-04-15","texto":"PERITAJE REALIZADO, ESPERANDO LIQUIDACION","proximaRevision":"2025-05-01","completed":false}]},{"id":"SINIESTRO_6_1735933845005","fecha":"2024-12-15","cliente":"RODRIGUEZ MARIA","dni":"32567890","celular":"1156789012","aseguradoEn":"FEDERACION","contra":"SANCOR","numeroReclamo":"FED2024089","observacion":"CASO FINALIZADO CON ACUERDO TOTAL","fechaRevision":"","estado":"FINALIZADA","acuerdo":"SI","fechaPago":"2025-01-15","presupuesto":1250000,"indemnizacion":1250000,"honorarios":187500,"factura":"SI","observaciones":[{"id":"obs_6","fecha":"2025-01-10","texto":"CASO FINALIZADO CON ACUERDO TOTAL","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_7_1735933845006","fecha":"2024-11-20","cliente":"MARTINEZ CARLOS","dni":"29345678","celular":"1167890123","aseguradoEn":"RIVADAVIA","contra":"ZURICH","numeroReclamo":"RIV2024045","observacion":"FINALIZADO CON PAGO PARCIAL ACORDADO","fechaRevision":"","estado":"FINALIZADA P","acuerdo":"SI","fechaPago":"2024-12-25","presupuesto":2100000,"indemnizacion":1575000,"honorarios":236250,"factura":"SI","observaciones":[{"id":"obs_7","fecha":"2024-12-20","texto":"FINALIZADO CON PAGO PARCIAL ACORDADO","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_8_1735933845007","fecha":"2025-01-10","cliente":"LOPEZ PATRICIA","dni":"30456789","celular":"1178901234","aseguradoEn":"COPAN","contra":"LA CAJA","numeroReclamo":"CP2025002","observacion":"DOCUMENTACION ADICIONAL SOLICITADA","fechaRevision":"2025-03-01","estado":"DEMORADA","acuerdo":"","fechaPago":"","presupuesto":675000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_8","fecha":"2025-02-01","texto":"DOCUMENTACION ADICIONAL SOLICITADA","proximaRevision":"2025-03-01","completed":false}]},{"id":"SINIESTRO_9_1735933845008","fecha":"2024-10-15","cliente":"GARCIA FERNANDO","dni":"31567890","celular":"1189012345","aseguradoEn":"FEDERACION","contra":"ORBIS","numeroReclamo":"FED2024067","observacion":"PERITAJE FAVORABLE, EN LIQUIDACION","fechaRevision":"2025-01-15","estado":"EJECUCION","acuerdo":"","fechaPago":"","presupuesto":1450000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_9","fecha":"2024-11-30","texto":"PERITAJE FAVORABLE, EN LIQUIDACION","proximaRevision":"2025-01-15","completed":false}]},{"id":"SINIESTRO_10_1735933845009","fecha":"2024-09-05","cliente":"FERNANDEZ ANA","dni":"27890123","celular":"1190123456","aseguradoEn":"RIVADAVIA","contra":"SANCOR","numeroReclamo":"RIV2024034","observacion":"RECHAZADO POR FALTA DE COBERTURA","fechaRevision":"","estado":"RECHAZADO","acuerdo":"","fechaPago":"","presupuesto":820000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_10","fecha":"2024-10-15","texto":"RECHAZADO POR FALTA DE COBERTURA","proximaRevision":"","completed":true}]}];
+        let siniestrosData = [];
+        let editingSiniestroId = null, editingField = null;
+
+        function saveData() { localStorage.setItem('planilla_siniestros_data', JSON.stringify(siniestrosData)); updateDataStatus('✅ Datos guardados'); }
+        function loadData() {
+            const savedData = localStorage.getItem('planilla_siniestros_data');
+            let data = savedData ? JSON.parse(savedData) : JSON.parse(JSON.stringify(initialData));
+            siniestrosData = sanitizeData(data);
+            if (!savedData && siniestrosData.length > 0) saveData();
+            updateDataStatus(savedData ? '✅ Datos cargados' : '📋 Planilla lista con datos iniciales');
+        }
+        function sanitizeData(data) {
+            let sanitized = false;
+            data.forEach(s => {
+                if (!s.id) { s.id = generateId(s); sanitized = true; }
+                if (!s.observaciones) { s.observaciones = []; sanitized = true; }
+                s.observaciones.forEach(obs => {
+                    if (!obs.id) { obs.id = generateId({}); sanitized = true; }
+                    if (typeof obs.completed === 'undefined') { obs.completed = false; sanitized = true; }
+                });
+                updateSiniestroNextRevision(s);
+            });
+            if (sanitized) console.log("Data sanitized on load.");
+            return data;
+        }
+
+        function updateDataStatus(message, isError = false) {
+            const el = document.getElementById('dataStatus');
+            el.textContent = message;
+            el.style.background = isError ? '#f8d7da' : '#d4edda';
+            el.style.color = isError ? '#721c24' : '#155724';
+        }
+        function formatDate(dateString) { if (!dateString) return 'No definida'; return new Date(dateString + 'T00:00:00').toLocaleDateString('es-AR', { timeZone: 'UTC' }); }
+        function isToday(dateString) { if (!dateString) return false; return new Date().toDateString() === new Date(dateString + 'T00:00:00').toDateString(); }
+        function isPastDue(dateString) { if (!dateString) return false; const today = new Date(); today.setHours(0, 0, 0, 0); return new Date(dateString + 'T00:00:00') < today; }
+        function getDaysDifference(dateString) { if (!dateString) return 999; const today = new Date(); today.setHours(0, 0, 0, 0); return Math.ceil((new Date(dateString + 'T00:00:00') - today) / (1000 * 60 * 60 * 24)); }
+        function generateId(item) { return `SIN_${(item.cliente || 'S').slice(0,3).toUpperCase()}_${Date.now()}`; }
+        function getDisplayName(s) { return `${s.cliente} - Reclamo: ${s.numeroReclamo || 'S/N'} (${s.estado})`; }
+        function formatCurrency(amount) { if (!amount) return 'S/D'; return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount); }
+        
+        function updateSiniestroNextRevision(siniestro) {
+            const futureObs = (siniestro.observaciones || [])
+                .filter(obs => !obs.completed && obs.proximaRevision)
+                .sort((a, b) => new Date(a.proximaRevision) - new Date(b.proximaRevision));
+            
+            if (futureObs.length > 0) {
+                siniestro.fechaRevision = futureObs[0].proximaRevision;
+                siniestro.observacion = futureObs[0].texto;
+            } else {
+                siniestro.fechaRevision = '';
+                siniestro.observacion = 'No hay tareas pendientes';
+            }
+        }
+
+        function toggleCompleted(event, siniestroId, obsId) {
+            event.stopPropagation();
+            const siniestro = siniestrosData.find(s => s.id === siniestroId);
+            if (!siniestro) return;
+            const obs = siniestro.observaciones.find(o => o.id === obsId);
+            if (!obs) return;
+            obs.completed = !obs.completed;
+            updateSiniestroNextRevision(siniestro);
+            saveData();
+            renderAll();
+        }
+
+        function renderAll() {
+            siniestrosData.forEach(updateSiniestroNextRevision);
+            renderDashboardLists();
+            renderAllSiniestrosList();
+        }
+
+        function renderDashboardLists() {
+            const allTasks = siniestrosData.flatMap(siniestro => (siniestro.observaciones || []).map(obs => ({...obs, siniestro})));
+            const todayTasks = allTasks.filter(task => !task.completed && isToday(task.proximaRevision));
+            const overdueTasks = allTasks.filter(task => !task.completed && isPastDue(task.proximaRevision)).sort((a,b) => new Date(a.proximaRevision) - new Date(b.proximaRevision));
+            const upcomingTasks = allTasks.filter(task => !task.completed && getDaysDifference(task.proximaRevision) > 0).sort((a,b) => new Date(a.proximaRevision) - new Date(b.proximaRevision));
+
+            renderReviewList('todayReviews', todayTasks, 'No hay revisiones para hoy', 'today');
+            renderReviewList('overdueReviews', overdueTasks, 'No hay revisiones vencidas', 'overdue');
+            renderReviewList('upcomingReviews', upcomingTasks, 'No hay próximas revisiones', 'upcoming');
+        }
+
+        function renderReviewList(containerId, tasks, emptyMsg, type) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = tasks.length === 0 ? `<p style="color: rgba(255,255,255,0.8);">${emptyMsg}</p>` : tasks.map(task => {
+                let dateInfo = '';
+                if (type === 'today') dateInfo = 'HOY';
+                else if (type === 'overdue') dateInfo = `VENCIDA - ${formatDate(task.proximaRevision)}`;
+                else dateInfo = `En ${getDaysDifference(task.proximaRevision)} días - ${formatDate(task.proximaRevision)}`;
+                
+                return `<div class="review-item"><button class="complete-btn" onclick="toggleCompleted(event, '${task.siniestro.id}', '${task.id}')">✔️</button><div class="review-item-content" onclick="showSiniestroModal('${task.siniestro.id}')"><div class="review-date">${dateInfo}</div><div class="review-client">${task.siniestro.cliente}</div><div class="review-obs">${task.texto}</div></div></div>`;
+            }).join('');
+        }
+        
+        function renderAllSiniestrosList() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const estadoFilter = document.getElementById('estadoFilter').value;
+            const filteredData = siniestrosData.filter(s => {
+                const matchesSearch = !searchTerm || Object.values(s).some(val => String(val).toLowerCase().includes(searchTerm));
+                const matchesEstado = !estadoFilter || s.estado === estadoFilter;
+                return matchesSearch && matchesEstado;
+            }).sort((a, b) => (new Date(a.fechaRevision) || 0) - (new Date(b.fechaRevision) || 0));
+
+            document.getElementById('allSiniestros').innerHTML = filteredData.length === 0 ? '<p>No se encontraron siniestros.</p>' : filteredData.map(s => {
+                const hasPendingTask = (s.observaciones || []).some(obs => !obs.completed && obs.proximaRevision);
+                const classes = `review-item ${!hasPendingTask ? 'completed' : ''} ${isToday(s.fechaRevision) ? 'today' : ''} ${isPastDue(s.fechaRevision) ? 'overdue' : ''}`;
+                return `<div class="${classes}" onclick="showSiniestroModal('${s.id}')"><div class="review-item-content"><div class="review-date">Próx. Revisión: ${formatDate(s.fechaRevision)}</div><div class="review-client">${s.cliente} - Reclamo: ${s.numeroReclamo || 'S/N'}</div><div class="review-obs">Últ. Tarea: ${s.observacion}</div></div></div>`;
+            }).join('');
+        }
+
+        function showNewSiniestroModal() { document.getElementById('newSiniestroModal').classList.add('active'); }
+        function showSiniestroSelectorModal() {
+            const selector = document.getElementById('siniestroSelector');
+            selector.innerHTML = '<option value="">-- Seleccionar --</option>' + [...siniestrosData].sort((a,b) => a.cliente.localeCompare(b.cliente)).map(s => `<option value="${s.id}">${getDisplayName(s)}</option>`).join('');
+            document.getElementById('siniestroSelectorModal').classList.add('active');
+        }
+        function loadSiniestroInfo() { const siniestroId = document.getElementById('siniestroSelector').value; if (siniestroId) { closeModal('siniestroSelectorModal'); showSiniestroModal(siniestroId); } }
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); editingSiniestroId = null; editingField = null; }
+
+        function showSiniestroModal(siniestroId) {
+            const siniestro = siniestrosData.find(s => s.id === siniestroId);
+            if (!siniestro) return;
+            updateSiniestroNextRevision(siniestro);
+            const content = `
+                <span class="close" onclick="closeModal('siniestroInfoModal')">&times;</span><h2>🏥 ${siniestro.cliente}</h2>
+                <div class="client-info">
+                    <h4>📋 Información del Siniestro</h4>
+                    <div class="info-grid">
+                        ${Object.entries({cliente: 'Cliente', dni: 'DNI', celular: 'Celular', estado: 'Estado', aseguradoEn: 'Asegurado En', contra: 'Contra', numeroReclamo: 'N° Reclamo', presupuesto: 'Presupuesto', indemnizacion: 'Indemnización', honorarios: 'Honorarios', acuerdo: 'Acuerdo', fechaPago: 'Fecha Pago', factura: 'Factura'}).map(([key, label]) => `
+                        <div class="info-item"><div class="info-label">${label}</div><div class="editable-field" id="field-${key}" onclick="editField('${siniestro.id}', '${key}', '${String(siniestro[key] || '').replace(/'/g, '&#39;')}')"><div class="info-value">${key.includes('presupuesto') || key.includes('indemnizacion') || key.includes('honorarios') ? formatCurrency(siniestro[key]) : (siniestro[key] || 'S/D')}</div></div></div>`).join('')}
+                        <div class="info-item"><div class="info-label">Próxima Tarea</div><div class="info-value" style="color: #e74c3c; font-weight: bold;">${formatDate(siniestro.fechaRevision)}</div></div>
+                    </div>
+                </div>
+                <div class="observations-history">
+                    <h4>📝 Historial de Tareas</h4>
+                    <div style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;">
+                        ${(siniestro.observaciones || []).length > 0 ? [...siniestro.observaciones].sort((a, b) => new Date(b.proximaRevision) - new Date(a.proximaRevision)).map(obs => {
+                            const isNextTask = obs.proximaRevision === siniestro.fechaRevision && obs.texto === siniestro.observacion && !obs.completed;
+                            return `<div class="obs-item ${obs.completed ? 'completed' : ''}" style="${isNextTask ? 'border-left-color: #e74c3c;' : ''}"><div class="obs-date">${formatDate(obs.fecha)} ${isNextTask ? '(PRÓXIMA TAREA)' : ''}</div><div class="obs-text">${obs.texto}</div><div class="obs-revision-date">Revisión: ${formatDate(obs.proximaRevision)}</div></div>`;
+                        }).join('') : '<p>No hay tareas.</p>'}
+                    </div>
+                </div>
+                <form class="form-section" onsubmit="addObservation(event, '${siniestro.id}')"><h4>➕ Agregar Tarea</h4><div class="form-group"><label>Texto</label><textarea id="newObsText" rows="2" required></textarea></div><div class="form-group"><label>Fecha de Revisión</label><input type="date" id="newRevisionDate" required></div><button type="submit" class="btn btn-success">💾 Guardar Tarea</button></form>
+                <div class="action-buttons"><button class="btn btn-info" onclick="showDocumentModal('${siniestro.id}')">📁 Gestionar Documentos</button><button class="btn btn-danger" onclick="deleteSiniestro('${siniestro.id}')">🗑️ Eliminar Siniestro</button></div>`;
+            document.getElementById('siniestroInfoModal').querySelector('.modal-content').innerHTML = content;
+            document.getElementById('siniestroInfoModal').classList.add('active');
+        }
+
+        function editField(siniestroId, fieldName, currentValue) {
+            editingSiniestroId = siniestroId; editingField = fieldName;
+            const fieldElement = document.getElementById(`field-${fieldName}`);
+            const input = document.createElement('input');
+            input.type = (fieldName === 'presupuesto' || fieldName === 'indemnizacion' || fieldName === 'honorarios' || fieldName === 'dni') ? 'number' : 'text';
+            input.value = currentValue;
+            fieldElement.innerHTML = ''; fieldElement.appendChild(input); input.focus();
+            input.addEventListener('blur', saveField);
+            input.addEventListener('keypress', e => { if (e.key === 'Enter') saveField(); });
+        }
+        function saveField() {
+            if (!editingSiniestroId || !editingField) return;
+            const siniestro = siniestrosData.find(c => c.id === editingSiniestroId);
+            const input = document.getElementById(`field-${editingField}`).querySelector('input');
+            if (siniestro && input) { siniestro[editingField] = input.value; saveData(); renderAll(); showSiniestroModal(editingSiniestroId); }
+            editingSiniestroId = null; editingField = null;
+        }
+        function deleteSiniestro(id) { if (confirm('¿Eliminar este siniestro?')) { siniestrosData = siniestrosData.filter(s => s.id !== id); saveData(); renderAll(); closeModal('siniestroInfoModal'); } }
+        function addObservation(event, siniestroId) {
+            event.preventDefault();
+            const siniestro = siniestrosData.find(s => s.id === siniestroId);
+            if (!siniestro) return;
+            siniestro.observaciones.push({ id: generateId({}), fecha: new Date().toISOString().split('T')[0], texto: document.getElementById('newObsText').value, proximaRevision: document.getElementById('newRevisionDate').value, completed: false });
+            updateSiniestroNextRevision(siniestro);
+            saveData(); renderAll(); showSiniestroModal(siniestroId);
+        }
+
+        function exportToExcel() {
+            const excelData = siniestrosData.map(s => {
+                const allObs = (s.observaciones || []).map(obs => `${formatDate(obs.fecha)} (Rev: ${formatDate(obs.proximaRevision)}): ${obs.texto}`).join(' | ');
+                return { 'Cliente': s.cliente, 'DNI': s.dni, 'Celular': s.celular, 'Estado': s.estado, 'Asegurado En': s.aseguradoEn, 'Contra': s.contra, 'N° Reclamo': s.numeroReclamo, 'Próxima Revisión': formatDate(s.fechaRevision), 'Última Tarea': s.observacion, 'Presupuesto': s.presupuesto, 'Indemnización': s.indemnizacion, 'Honorarios': s.honorarios, 'Historial': allObs };
+            });
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Siniestros');
+            XLSX.writeFile(workbook, `Siniestros_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+        function exportData() { const dataStr = JSON.stringify(siniestrosData, null, 2); const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([dataStr], {type: 'application/json'})); link.download = `siniestros_${new Date().toISOString().split('T')[0]}.json`; link.click(); }
+        function importData() { document.getElementById('importInput').click(); }
+        function handleImport(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => { try { const imported = JSON.parse(e.target.result); if (Array.isArray(imported) && confirm(`Importar ${imported.length} registros?`)) { siniestrosData = imported; saveData(); renderAll(); } } catch (err) { alert('Error al importar.'); } };
+            reader.readAsText(file); event.target.value = '';
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('newSiniestroModal').querySelector('.modal-content').innerHTML = `<span class="close" onclick="closeModal('newSiniestroModal')">&times;</span><h2>➕ Agregar Nuevo Siniestro</h2><form id="newSiniestroForm"><div class="info-grid"><div class="form-group"><label>Cliente *</label><input type="text" id="newCliente" required></div><div class="form-group"><label>DNI</label><input type="number" id="newDni"></div><div class="form-group"><label>Celular</label><input type="tel" id="newCelular"></div><div class="form-group"><label>Estado *</label><select id="newEstado" required><option value="EJECUCION">En Ejecución</option><option value="FINALIZADA">Finalizada</option><option value="FINALIZADA P">Finalizada P</option><option value="RECHAZADO">Rechazado</option><option value="DEMORADA">Demorada</option></select></div><div class="form-group"><label>Asegurado En</label><input type="text" id="newAseguradoEn"></div><div class="form-group"><label>Contra</label><input type="text" id="newContra"></div><div class="form-group"><label>N° Reclamo</label><input type="text" id="newNumeroReclamo"></div><div class="form-group"><label>Presupuesto</label><input type="number" id="newPresupuesto"></div></div><div class="form-group"><label>Tarea Inicial</label><textarea id="newObservacion" rows="3"></textarea></div><div class="form-group"><label>Fecha de Revisión</label><input type="date" id="newFechaRevision"></div><div style="text-align:center;"><button type="submit" class="btn btn-success">💾 Guardar</button></div></form>`;
+            document.getElementById('siniestroSelectorModal').querySelector('.modal-content').innerHTML = `<span class="close" onclick="closeModal('siniestroSelectorModal')">&times;</span><h2>👁️ Seleccionar Siniestro</h2><div class="form-group"><select id="siniestroSelector" onchange="loadSiniestroInfo()"></select></div>`;
+            document.getElementById('documentModal').querySelector('.modal-content').innerHTML = `<span class="close" onclick="closeModal('documentModal')">&times;</span><h2 id="documentModalTitle"></h2><ul id="documentList" class="document-list"></ul><div style="text-align: center; margin-top: 20px;"><button class="btn btn-info" onclick="triggerDocumentUpload()">➕ Subir Documento</button></div>`;
+            
+            document.getElementById('newSiniestroForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const newSiniestro = { id: generateId({}), cliente: document.getElementById('newCliente').value.toUpperCase(), dni: document.getElementById('newDni').value, celular: document.getElementById('newCelular').value, estado: document.getElementById('newEstado').value, aseguradoEn: document.getElementById('newAseguradoEn').value.toUpperCase(), contra: document.getElementById('newContra').value.toUpperCase(), numeroReclamo: document.getElementById('newNumeroReclamo').value, presupuesto: document.getElementById('newPresupuesto').value, observaciones: [] };
+                const obsText = document.getElementById('newObservacion').value;
+                const revDate = document.getElementById('newFechaRevision').value;
+                if (obsText && revDate) { newSiniestro.observaciones.push({ id: generateId({}), fecha: new Date().toISOString().split('T')[0], texto: obsText, proximaRevision: revDate, completed: false }); }
+                updateSiniestroNextRevision(newSiniestro);
+                siniestrosData.push(newSiniestro);
+                saveData(); renderAll(); closeModal('newSiniestroModal'); e.target.reset();
+            });
+
+            loadData();
+            renderAll();
+        });
+        window.addEventListener('click', e => { if (e.target.classList.contains('modal')) closeModal(e.target.id); });
+    </script>
+    
+    <!-- SECCIÓN DE CÓDIGO DE GOOGLE DRIVE -->
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+    <script>
+        const CLIENT_ID = '976943805178-lr5pvivhpstfnjp4leoolopo0kvb1cif.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyDSMWMM3lJM4ZNqRezhH-8uxaE1GVOjrrM';
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        const DATA_FILE_NAME = 'datos_planilla_siniestros.json';
+        const DOCS_FOLDER_NAME = 'Planilla_Siniestros_Documentos';
+
+        let tokenClient, gapiInited = false, gisInited = false, dataFileId = null, docsFolderId = null, currentSiniestroIdForDocs = null;
+        const driveStatusEl = document.getElementById('driveStatus'), connectDriveBtn = document.getElementById('connectDriveBtn'), saveToDriveBtn = document.getElementById('saveToDriveBtn'), loadFromDriveBtn = document.getElementById('loadFromDriveBtn');
+
+        function gapiLoaded() { gapi.load('client', initializeGapiClient); }
+        async function initializeGapiClient() { await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] }); gapiInited = true; maybeEnableButtons(); }
+        function gisLoaded() { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: SCOPES, callback: '' }); gisInited = true; maybeEnableButtons(); }
+        function maybeEnableButtons() { if (gapiInited && gisInited) connectDriveBtn.onclick = handleAuthClick; }
+        function updateDriveStatus(message, isConnected = false) { driveStatusEl.style.display = 'block'; driveStatusEl.textContent = message; driveStatusEl.style.background = isConnected ? '#d1e7dd' : '#fff3cd'; driveStatusEl.style.color = isConnected ? '#0f5132' : '#664d03'; }
+
+        function handleAuthClick() {
+            tokenClient.callback = async (resp) => {
+                if (resp.error) throw (resp);
+                updateDriveStatus('✅ Conectado a Google Drive', true);
+                connectDriveBtn.style.display = 'none'; saveToDriveBtn.style.display = 'inline-block'; loadFromDriveBtn.style.display = 'inline-block';
+                saveToDriveBtn.onclick = saveDataToDrive; loadFromDriveBtn.onclick = loadDataFromDrive;
+                await findDataFile();
+            };
+            if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'}); else tokenClient.requestAccessToken({prompt: ''});
+        }
+        async function findDataFile() {
+            updateDriveStatus('Buscando archivo de datos...', false);
+            try {
+                const response = await gapi.client.drive.files.list({ q: `name='${DATA_FILE_NAME}' and trashed=false`, fields: 'files(id, name)', spaces: 'drive' });
+                if (response.result.files.length > 0) { dataFileId = response.result.files[0].id; updateDriveStatus('✅ Archivo de datos encontrado.', true); }
+                else { updateDriveStatus('⚠️ Archivo no encontrado. Se creará uno nuevo al guardar.', false); dataFileId = null; }
+            } catch (err) { console.error(err); alert('Error al buscar el archivo de datos.'); }
+        }
+        async function saveDataToDrive() {
+            if (!confirm('¿Guardar los datos actuales en Google Drive?')) return;
+            updateDriveStatus('Guardando datos en Drive...', false);
+            const content = JSON.stringify(siniestrosData, null, 2);
+            try {
+                const fileMetadata = await uploadFileContent(content, DATA_FILE_NAME, 'application/json', null, dataFileId);
+                dataFileId = fileMetadata.id;
+                updateDriveStatus('✅ ¡Datos guardados en Drive con éxito!', true);
+            } catch (err) { console.error(err); updateDriveStatus('❌ Error al guardar en Drive.', false); }
+        }
+        async function loadDataFromDrive() {
+            if (!dataFileId) return alert("No se ha encontrado un archivo de datos. Guarda primero para crear uno.");
+            if (!confirm("¿Seguro? Se reemplazarán los datos actuales con los de Drive.")) return;
+            updateDriveStatus('Cargando datos desde Drive...', false);
+            try {
+                const response = await gapi.client.drive.files.get({ fileId: dataFileId, alt: 'media' });
+                const importedData = JSON.parse(response.body);
+                if (!Array.isArray(importedData)) throw new Error('Formato no válido.');
+                siniestrosData = importedData; saveData(); renderAll();
+                updateDriveStatus('✅ Datos cargados desde Drive con éxito.', true);
+            } catch (err) { console.error(err); updateDriveStatus('❌ Error al cargar desde Drive.', false); }
+        }
+        async function getOrCreateFolder(name, parentId = null) {
+            let query = `mimeType='application/vnd.google-apps.folder' and name='${name}' and trashed=false`;
+            if (parentId) query += ` and '${parentId}' in parents`;
+            const response = await gapi.client.drive.files.list({ q: query, fields: 'files(id)' });
+            if (response.result.files.length > 0) return response.result.files[0].id;
+            const fileMetadata = { name, mimeType: 'application/vnd.google-apps.folder' };
+            if (parentId) fileMetadata.parents = [parentId];
+            const newFolder = await gapi.client.drive.files.create({ resource: fileMetadata, fields: 'id' });
+            return newFolder.result.id;
+        }
+        async function showDocumentModal(siniestroId) {
+            if (gapi.client.getToken() === null) return alert('Conecta con Google Drive primero.');
+            currentSiniestroIdForDocs = siniestroId;
+            const siniestro = siniestrosData.find(s => s.id === siniestroId);
+            if (!siniestro) return;
+            document.getElementById('documentModalTitle').innerText = `Documentos de: ${siniestro.cliente}`;
+            document.getElementById('documentModal').classList.add('active');
+            const listEl = document.getElementById('documentList');
+            listEl.innerHTML = '<div class="spinner"></div>';
+            try {
+                if (!docsFolderId) docsFolderId = await getOrCreateFolder(DOCS_FOLDER_NAME);
+                const clientFolderName = `${siniestro.cliente.replace(/[\/\\?%*:|"<>]/g, '-')}_${siniestro.dni || siniestro.id.slice(-4)}`;
+                const clientFolderId = await getOrCreateFolder(clientFolderName, docsFolderId);
+                const response = await gapi.client.drive.files.list({ q: `'${clientFolderId}' in parents and trashed=false`, fields: 'files(id, name, webViewLink)' });
+                listEl.innerHTML = response.result.files.length === 0 ? '<li>No hay documentos.</li>' : response.result.files.map(file => `<li><a href="${file.webViewLink}" target="_blank">${file.name}</a><button class="btn btn-danger btn-sm" onclick="deleteDocument('${file.id}')">X</button></li>`).join('');
+            } catch (err) { console.error(err); listEl.innerHTML = '<li>Error al cargar documentos.</li>'; }
+        }
+        async function deleteDocument(fileId) { if (confirm('¿Eliminar este documento?')) try { await gapi.client.drive.files.delete({ fileId }); showDocumentModal(currentSiniestroIdForDocs); } catch (err) { alert('Error al eliminar.'); } }
+        function triggerDocumentUpload() { const uploader = document.getElementById('documentUploadInput'); uploader.onchange = handleDocumentUpload; uploader.value = ''; uploader.click(); }
+        async function handleDocumentUpload(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const listEl = document.getElementById('documentList');
+            listEl.innerHTML = '<div class="spinner"></div><p style="text-align:center;">Subiendo...</p>';
+            try {
+                if (!docsFolderId) docsFolderId = await getOrCreateFolder(DOCS_FOLDER_NAME);
+                const siniestro = siniestrosData.find(s => s.id === currentSiniestroIdForDocs);
+                const clientFolderName = `${siniestro.cliente.replace(/[\/\\?%*:|"<>]/g, '-')}_${siniestro.dni || siniestro.id.slice(-4)}`;
+                const clientFolderId = await getOrCreateFolder(clientFolderName, docsFolderId);
+                const reader = new FileReader();
+                reader.onload = async (e) => { await uploadFileContent(e.target.result, file.name, file.type, clientFolderId, null); showDocumentModal(currentSiniestroIdForDocs); };
+                reader.readAsArrayBuffer(file);
+            } catch (err) { console.error(err); alert("Error al subir."); showDocumentModal(currentSiniestroIdForDocs); }
+        }
+        function uploadFileContent(content, fileName, mimeType, parentId, fileIdToUpdate) {
+            let contentToUpload, contentTypeForRequest;
+            if (typeof content === 'string') { contentToUpload = content; contentTypeForRequest = mimeType; } else { contentToUpload = new Uint8Array(content).reduce((data, byte) => data + String.fromCharCode(byte), ''); contentTypeForRequest = mimeType; }
+            const boundary = '-------314159265358979323846', delimiter = `\r\n--${boundary}\r\n`, close_delim = `\r\n--${boundary}--`;
+            const metadata = { name: fileName, mimeType: mimeType };
+            if (parentId) metadata.parents = [parentId];
+            const multipartRequestBody = delimiter + 'Content-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(metadata) + delimiter + `Content-Type: ${contentTypeForRequest}\r\n` + (typeof content === 'string' ? '' : 'Content-Transfer-Encoding: base64\r\n') + '\r\n' + (typeof content === 'string' ? contentToUpload : btoa(contentToUpload)) + close_delim;
+            const path = fileIdToUpdate ? `/upload/drive/v3/files/${fileIdToUpdate}` : '/upload/drive/v3/files';
+            const method = fileIdToUpdate ? 'PATCH' : 'POST';
+            return gapi.client.request({ path: path, method: method, params: { uploadType: 'multipart' }, headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body: multipartRequestBody }).then(response => response.result);
+        }
+    </script>
+</body>
+</html>
