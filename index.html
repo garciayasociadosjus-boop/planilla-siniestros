@@ -219,7 +219,6 @@
             if (sanitized) console.log("Data sanitized on load.");
             return data;
         }
-
         function updateDataStatus(message, isError = false) {
             const el = document.getElementById('dataStatus');
             el.textContent = message;
@@ -227,19 +226,27 @@
             el.style.color = isError ? '#721c24' : '#155724';
         }
         
-        function parseDate(dateString) {
-            if (!dateString) return null;
-            // BUG FIX: This is a simpler and more reliable way to parse YYYY-MM-DD
-            const parts = dateString.split('-');
-            // Note: months are 0-based in JS (0 = January)
-            const date = new Date(parts[0], parts[1] - 1, parts[2]);
-            return isNaN(date.getTime()) ? null : date;
+        // --- NEW DATE LOGIC ---
+        function getDateAsNumber(dateString) {
+            if (!dateString || typeof dateString !== 'string') return null;
+            return parseInt(dateString.replace(/-/g, ''), 10);
         }
+        function getTodayAsNumber() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return parseInt(`${year}${month}${day}`, 10);
+        }
+        function formatDate(dateString) {
+            if (!dateString) return 'No definida';
+            const [year, month, day] = dateString.split('-');
+            return `${day}/${month}/${year}`;
+        }
+        function isToday(dateString) { return getDateAsNumber(dateString) === getTodayAsNumber(); }
+        function isPastDue(dateString) { return getDateAsNumber(dateString) < getTodayAsNumber(); }
+        // --- END OF NEW DATE LOGIC ---
 
-        function formatDate(dateString) { const d = parseDate(dateString); return d ? d.toLocaleDateString('es-AR', {timeZone: 'UTC'}) : 'No definida'; }
-        function isToday(dateString) { const d = parseDate(dateString); if(!d) return false; const today = new Date(); return d.toDateString() === today.toDateString(); }
-        function isPastDue(dateString) { const d = parseDate(dateString); if(!d) return false; const today = new Date(); today.setHours(0,0,0,0); return d < today; }
-        function getDaysDifference(dateString) { const d = parseDate(dateString); if (!d) return 999; const today = new Date(); today.setHours(0, 0, 0, 0); return Math.ceil((d - today) / (1000 * 60 * 60 * 24)); }
         function generateId(item) { return `SIN_${(item.cliente || 'S').slice(0,3).toUpperCase()}_${Date.now()}`; }
         function getDisplayName(s) { return `${s.cliente} - Reclamo: ${s.numeroReclamo || 'S/N'} (${s.estado})`; }
         function formatCurrency(amount) { if (!amount) return 'S/D'; return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount); }
@@ -247,7 +254,7 @@
         function updateSiniestroNextRevision(siniestro) {
             const futureObs = (siniestro.observaciones || [])
                 .filter(obs => !obs.completed && obs.proximaRevision)
-                .sort((a, b) => parseDate(a.proximaRevision) - parseDate(b.proximaRevision));
+                .sort((a, b) => getDateAsNumber(a.proximaRevision) - getDateAsNumber(b.proximaRevision));
             
             if (futureObs.length > 0) {
                 siniestro.fechaRevision = futureObs[0].proximaRevision;
@@ -257,7 +264,6 @@
                 siniestro.observacion = 'No hay tareas pendientes';
             }
         }
-
         function toggleCompleted(event, siniestroId, obsId) {
             event.stopPropagation();
             const siniestro = siniestrosData.find(s => s.id === siniestroId);
@@ -269,36 +275,32 @@
             saveData();
             renderAll();
         }
-
         function renderAll() {
             siniestrosData.forEach(updateSiniestroNextRevision);
             renderDashboardLists();
             renderAllSiniestrosList();
         }
-
         function renderDashboardLists() {
             const allTasks = siniestrosData.flatMap(siniestro => (siniestro.observaciones || []).map(obs => ({...obs, siniestro})));
             const todayTasks = allTasks.filter(task => !task.completed && isToday(task.proximaRevision));
-            const overdueTasks = allTasks.filter(task => !task.completed && isPastDue(task.proximaRevision)).sort((a,b) => parseDate(a.proximaRevision) - parseDate(b.proximaRevision));
-            const upcomingTasks = allTasks.filter(task => !task.completed && getDaysDifference(task.proximaRevision) >= 0 && !isToday(task.proximaRevision)).sort((a,b) => parseDate(a.proximaRevision) - parseDate(b.proximaRevision));
+            const overdueTasks = allTasks.filter(task => !task.completed && isPastDue(task.proximaRevision)).sort((a,b) => getDateAsNumber(a.proximaRevision) - getDateAsNumber(b.proximaRevision));
+            const upcomingTasks = allTasks.filter(task => !task.completed && !isToday(task.proximaRevision) && !isPastDue(task.proximaRevision)).sort((a,b) => getDateAsNumber(a.proximaRevision) - getDateAsNumber(b.proximaRevision));
 
             renderReviewList('todayReviews', todayTasks, 'No hay revisiones para hoy', 'today');
             renderReviewList('overdueReviews', overdueTasks, 'No hay revisiones vencidas', 'overdue');
             renderReviewList('upcomingReviews', upcomingTasks, 'No hay próximas revisiones', 'upcoming');
         }
-
         function renderReviewList(containerId, tasks, emptyMsg, type) {
             const container = document.getElementById(containerId);
             container.innerHTML = tasks.length === 0 ? `<p style="color: rgba(255,255,255,0.8);">${emptyMsg}</p>` : tasks.map(task => {
                 let dateInfo = '';
                 if (type === 'today') dateInfo = 'HOY';
                 else if (type === 'overdue') dateInfo = `VENCIDA - ${formatDate(task.proximaRevision)}`;
-                else dateInfo = `En ${getDaysDifference(task.proximaRevision)} días - ${formatDate(task.proximaRevision)}`;
+                else dateInfo = `Próxima - ${formatDate(task.proximaRevision)}`;
                 
                 return `<div class="review-item"><button class="complete-btn" onclick="toggleCompleted(event, '${task.siniestro.id}', '${task.id}')">✔️</button><div class="review-item-content" onclick="showSiniestroModal('${task.siniestro.id}')"><div class="review-date">${dateInfo}</div><div class="review-client">${task.siniestro.cliente}</div><div class="review-obs">${task.texto}</div></div></div>`;
             }).join('');
         }
-        
         function renderAllSiniestrosList() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const estadoFilter = document.getElementById('estadoFilter').value;
@@ -306,7 +308,7 @@
                 const matchesSearch = !searchTerm || Object.values(s).some(val => String(val).toLowerCase().includes(searchTerm));
                 const matchesEstado = !estadoFilter || s.estado === estadoFilter;
                 return matchesSearch && matchesEstado;
-            }).sort((a, b) => (parseDate(a.fechaRevision) || new Date(0)) - (parseDate(b.fechaRevision) || new Date(0)));
+            }).sort((a, b) => (getDateAsNumber(a.fechaRevision) || 0) - (getDateAsNumber(b.fechaRevision) || 0));
 
             document.getElementById('allSiniestros').innerHTML = filteredData.length === 0 ? '<p>No se encontraron siniestros.</p>' : filteredData.map(s => {
                 const hasPendingTask = (s.observaciones || []).some(obs => !obs.completed && obs.proximaRevision);
@@ -314,7 +316,6 @@
                 return `<div class="${classes}" onclick="showSiniestroModal('${s.id}')"><div class="review-item-content"><div class="review-date">Próx. Revisión: ${formatDate(s.fechaRevision)}</div><div class="review-client">${s.cliente} - Reclamo: ${s.numeroReclamo || 'S/N'}</div><div class="review-obs">Últ. Tarea: ${s.observacion}</div></div></div>`;
             }).join('');
         }
-
         function showNewSiniestroModal() { document.getElementById('newSiniestroModal').classList.add('active'); }
         function showSiniestroSelectorModal() {
             const selector = document.getElementById('siniestroSelector');
@@ -323,7 +324,6 @@
         }
         function loadSiniestroInfo() { const siniestroId = document.getElementById('siniestroSelector').value; if (siniestroId) { closeModal('siniestroSelectorModal'); showSiniestroModal(siniestroId); } }
         function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); editingSiniestroId = null; editingField = null; }
-
         function showSiniestroModal(siniestroId) {
             const siniestro = siniestrosData.find(s => s.id === siniestroId);
             if (!siniestro) return;
@@ -349,9 +349,8 @@
             document.getElementById('siniestroInfoModal').querySelector('.modal-content').innerHTML = content;
             document.getElementById('siniestroInfoModal').classList.add('active');
         }
-        
         function renderObsList(siniestro) {
-            return (siniestro.observaciones || []).length === 0 ? '<p>No hay tareas.</p>' : [...siniestro.observaciones].sort((a,b) => parseDate(b.fecha) - parseDate(a.fecha)).map(obs => {
+            return (siniestro.observaciones || []).length === 0 ? '<p>No hay tareas.</p>' : [...siniestro.observaciones].sort((a,b) => (getDateAsNumber(b.fecha) || 0) - (getDateAsNumber(a.fecha) || 0)).map(obs => {
                 const isNextTask = obs.proximaRevision === siniestro.fechaRevision && obs.texto === siniestro.observacion && !obs.completed;
                 return `<div id="obs-item-${obs.id}" class="obs-item ${obs.completed ? 'completed' : ''}" style="${isNextTask ? 'border-left-color: #e74c3c;' : ''}">
                     <div class="obs-date">Creación: ${formatDate(obs.fecha)}</div>
@@ -362,7 +361,6 @@
                 </div>`;
             }).join('');
         }
-
         function editField(siniestroId, fieldName, currentValue) {
             const fieldElement = document.getElementById(`field-${fieldName}`);
             if (fieldElement.querySelector('input')) return;
@@ -382,7 +380,6 @@
             if (siniestro && input) { siniestro[editingField] = input.value; saveData(); renderAll(); showSiniestroModal(editingSiniestroId); }
             editingSiniestroId = null; editingField = null;
         }
-
         function editObs(siniestroId, obsId) {
             const siniestro = siniestrosData.find(s => s.id === siniestroId);
             const obs = siniestro.observaciones.find(o => o.id === obsId);
@@ -404,7 +401,6 @@
             renderAll();
             showSiniestroModal(siniestroId);
         }
-        
         function deleteObs(siniestroId, obsId) {
             if (!confirm('¿Estás seguro de que quieres eliminar esta tarea?')) return;
             const siniestro = siniestrosData.find(s => s.id === siniestroId);
@@ -414,7 +410,6 @@
             renderAll();
             showSiniestroModal(siniestroId);
         }
-
         function deleteSiniestro(id) { if (confirm('¿Eliminar este siniestro?')) { siniestrosData = siniestrosData.filter(s => s.id !== id); saveData(); renderAll(); closeModal('siniestroInfoModal'); } }
         function addObservation(event, siniestroId) {
             event.preventDefault();
@@ -423,7 +418,13 @@
             const obsText = document.getElementById('newObsText').value;
             const revDate = document.getElementById('newRevisionDate').value;
             if (obsText && revDate) {
-                siniestro.observaciones.push({ id: generateId({}), fecha: new Date().toISOString().split('T')[0], texto: obsText, proximaRevision: revDate, completed: false });
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const creationDate = `${year}-${month}-${day}`;
+
+                siniestro.observaciones.push({ id: generateId({}), fecha: creationDate, texto: obsText, proximaRevision: revDate, completed: false });
                 updateSiniestroNextRevision(siniestro);
                 saveData(); 
                 renderAll(); 
@@ -432,7 +433,6 @@
                 alert("Por favor, completa el texto y la fecha de revisión.");
             }
         }
-
         function exportToExcel() {
             const excelData = siniestrosData.map(s => {
                 const allObs = (s.observaciones || []).map(obs => `${formatDate(obs.fecha)} (Rev: ${formatDate(obs.proximaRevision)}): ${obs.texto}`).join(' | ');
@@ -451,23 +451,27 @@
             reader.onload = e => { try { const imported = JSON.parse(e.target.result); if (Array.isArray(imported) && confirm(`Importar ${imported.length} registros?`)) { siniestrosData = imported; saveData(); renderAll(); } } catch (err) { alert('Error al importar.'); } };
             reader.readAsText(file); event.target.value = '';
         }
-        
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('newSiniestroModal').querySelector('.modal-content').innerHTML = `<span class="close" onclick="closeModal('newSiniestroModal')">&times;</span><h2>➕ Agregar Nuevo Siniestro</h2><form id="newSiniestroForm"><div class="info-grid"><div class="form-group"><label>Cliente *</label><input type="text" id="newCliente" required></div><div class="form-group"><label>DNI</label><input type="number" id="newDni"></div><div class="form-group"><label>Celular</label><input type="tel" id="newCelular"></div><div class="form-group"><label>Estado *</label><select id="newEstado" required><option value="EJECUCION">En Ejecución</option><option value="FINALIZADA">Finalizada</option><option value="FINALIZADA P">Finalizada P</option><option value="RECHAZADO">Rechazado</option><option value="DEMORADA">Demorada</option></select></div><div class="form-group"><label>Asegurado En</label><input type="text" id="newAseguradoEn"></div><div class="form-group"><label>Contra</label><input type="text" id="newContra"></div><div class="form-group"><label>N° Reclamo</label><input type="text" id="newNumeroReclamo"></div><div class="form-group"><label>Presupuesto</label><input type="number" id="newPresupuesto"></div></div><div class="form-group"><label>Tarea Inicial</label><textarea id="newObservacion" rows="3"></textarea></div><div class="form-group"><label>Fecha de Revisión</label><input type="date" id="newFechaRevision"></div><div style="text-align:center;"><button type="submit" class="btn btn-success">💾 Guardar</button></div></form>`;
             document.getElementById('siniestroSelectorModal').querySelector('.modal-content').innerHTML = `<span class="close" onclick="closeModal('siniestroSelectorModal')">&times;</span><h2>👁️ Seleccionar Siniestro</h2><div class="form-group"><select id="siniestroSelector" onchange="loadSiniestroInfo()"></select></div>`;
             document.getElementById('documentModal').querySelector('.modal-content').innerHTML = `<span class="close" onclick="closeModal('documentModal')">&times;</span><h2 id="documentModalTitle"></h2><ul id="documentList" class="document-list"></ul><div style="text-align: center; margin-top: 20px;"><button class="btn btn-info" onclick="triggerDocumentUpload()">➕ Subir Documento</button></div>`;
-            
             document.getElementById('newSiniestroForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 const newSiniestro = { id: generateId({}), cliente: document.getElementById('newCliente').value.toUpperCase(), dni: document.getElementById('newDni').value, celular: document.getElementById('newCelular').value, estado: document.getElementById('newEstado').value, aseguradoEn: document.getElementById('newAseguradoEn').value.toUpperCase(), contra: document.getElementById('newContra').value.toUpperCase(), numeroReclamo: document.getElementById('newNumeroReclamo').value, presupuesto: document.getElementById('newPresupuesto').value, observaciones: [] };
                 const obsText = document.getElementById('newObservacion').value;
                 const revDate = document.getElementById('newFechaRevision').value;
-                if (obsText && revDate) { newSiniestro.observaciones.push({ id: generateId({}), fecha: new Date().toISOString().split('T')[0], texto: obsText, proximaRevision: revDate, completed: false }); }
+                if (obsText && revDate) {
+                    const today = new Date();
+                    const year = today.getFullYear();
+                    const month = String(today.getMonth() + 1).padStart(2, '0');
+                    const day = String(today.getDate()).padStart(2, '0');
+                    const creationDate = `${year}-${month}-${day}`;
+                    newSiniestro.observaciones.push({ id: generateId({}), fecha: creationDate, texto: obsText, proximaRevision: revDate, completed: false }); 
+                }
                 updateSiniestroNextRevision(newSiniestro);
                 siniestrosData.push(newSiniestro);
                 saveData(); renderAll(); closeModal('newSiniestroModal'); e.target.reset();
             });
-
             loadData();
             renderAll();
         });
