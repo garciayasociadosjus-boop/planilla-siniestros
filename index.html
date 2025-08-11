@@ -353,6 +353,7 @@
                     <div class="obs-text">${obs.texto}</div>
                     <div class="obs-revision-date">Revisión: ${formatDate(obs.proximaRevision)}</div>
                     <button class="btn btn-sm" onclick="editObs('${siniestro.id}', '${obs.id}')">Editar</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteObs('${siniestro.id}', '${obs.id}')">Eliminar</button>
                 </div>`;
             }).join('');
         }
@@ -385,7 +386,7 @@
                 <div class="form-group"><label>Texto</label><textarea id="edit-obs-text-${obsId}" rows="2">${obs.texto}</textarea></div>
                 <div class="form-group"><label>Fecha Revisión</label><input type="date" id="edit-obs-revision-${obsId}" value="${obs.proximaRevision}"></div>
                 <button class="btn btn-success btn-sm" onclick="saveObs('${siniestroId}', '${obsId}')">Guardar</button>
-                <button class="btn btn-danger btn-sm" onclick="showSiniestroModal('${siniestroId}')">Cancelar</button>
+                <button class="btn btn-sm" onclick="showSiniestroModal('${siniestroId}')">Cancelar</button>
             `;
         }
         function saveObs(siniestroId, obsId) {
@@ -393,6 +394,16 @@
             const obs = siniestro.observaciones.find(o => o.id === obsId);
             obs.texto = document.getElementById(`edit-obs-text-${obsId}`).value;
             obs.proximaRevision = document.getElementById(`edit-obs-revision-${obsId}`).value;
+            updateSiniestroNextRevision(siniestro);
+            saveData();
+            renderAll();
+            showSiniestroModal(siniestroId);
+        }
+        
+        function deleteObs(siniestroId, obsId) {
+            if (!confirm('¿Estás seguro de que quieres eliminar esta tarea?')) return;
+            const siniestro = siniestrosData.find(s => s.id === siniestroId);
+            siniestro.observaciones = siniestro.observaciones.filter(o => o.id !== obsId);
             updateSiniestroNextRevision(siniestro);
             saveData();
             renderAll();
