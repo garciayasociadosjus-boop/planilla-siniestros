@@ -141,7 +141,6 @@
             <div id="dataStatus" class="data-status">Cargando datos...</div>
             <div id="driveStatus" class="data-status" style="margin-top: -10px; display: none;"></div>
 
-            <!-- DASHBOARD DE TAREAS -->
             <div class="dashboard">
                 <div class="card today-reviews">
                     <h3><svg class="icon" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>Revisiones de Hoy</h3>
@@ -165,7 +164,6 @@
                 <button class="btn btn-warning" onclick="importData()">📥 Importar Datos</button>
             </div>
             
-            <!-- BOTONES DE GOOGLE DRIVE -->
             <div style="text-align: center; margin-bottom: 30px; border-top: 1px solid #ddd; padding-top: 20px;">
                 <button id="connectDriveBtn" class="btn">🔗 Conectar a Drive</button>
                 <button id="saveToDriveBtn" class="btn btn-success" style="display:none;">📤 Guardar en Drive</button>
@@ -193,7 +191,6 @@
     <div id="documentModal" class="modal"><div class="modal-content"></div></div>
     
     <script>
-        // DATOS INICIALES (TU EXCEL)
         const initialData = [{"id":"SINIESTRO_1_1735933845000","fecha":"","cliente":"GONCALVES BEATRIZ","dni":"22108382","celular":"1164233680","aseguradoEn":"RIVADAVIA","contra":"ORBIS","numeroReclamo":"232644","observacion":"SE INFORMO A CLIENTE QUE NO SE DARA RESOLUCION POR ORBIS NO DA RESPUESTA","fechaRevision":"","estado":"RECHAZADO","acuerdo":"","fechaPago":"","presupuesto":1140000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_1","fecha":"2025-04-30","texto":"SE INFORMO A CLIENTE QUE NO SE DARA RESOLUCION POR ORBIS NO DA RESPUESTA","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_2_1735933845001","fecha":"2025-05-06","cliente":"GRANADO MIGUEL ANGEL","dni":"21543471","celular":"1173653571","aseguradoEn":"COPAN","contra":"ZURICH","numeroReclamo":"0","observacion":"SE INFOMO A CLIENTE QUE ZURICH NO CUBRE EL PARABRISAS","fechaRevision":"","estado":"RECHAZADO","acuerdo":"","fechaPago":"","presupuesto":285999.99,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_2","fecha":"2025-05-20","texto":"SE INFOMO A CLIENTE QUE ZURICH NO CUBRE EL PARABRISAS","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_3_1735933845002","fecha":"","cliente":"SILGUEIRO VICTOR","dni":"34566518","celular":"","aseguradoEn":"FEDERACION","contra":"LA CAJA","numeroReclamo":"54000113645","observacion":"SE FUE CON NEMESIS","fechaRevision":"","estado":"RECHAZADO","acuerdo":"","fechaPago":"","presupuesto":1074000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_3","fecha":"2025-05-26","texto":"SE FUE CON NEMESIS","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_4_1735933845003","fecha":"","cliente":"GALEPPI SUSANA","dni":"11130200","celular":"1151388650","aseguradoEn":"GALENO","contra":"SAN CRISTÓBAL","numeroReclamo":"UC368744","observacion":"NO HIZO LA DENUECIA LE 3RO","fechaRevision":"","estado":"RECHAZADO","acuerdo":"","fechaPago":"","presupuesto":530000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_4","fecha":"2025-05-26","texto":"NO HIZO LA DENUECIA LE 3RO","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_5_1735933845004","fecha":"2025-04-01","cliente":"ALVAREZ CLAUDIA","dni":"28456789","celular":"1145678901","aseguradoEn":"COPAN","contra":"FEDERACION","numeroReclamo":"CP2025001","observacion":"PERITAJE REALIZADO, ESPERANDO LIQUIDACION","fechaRevision":"2025-05-01","estado":"EJECUCION","acuerdo":"","fechaPago":"","presupuesto":890000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_5","fecha":"2025-04-15","texto":"PERITAJE REALIZADO, ESPERANDO LIQUIDACION","proximaRevision":"2025-05-01","completed":false}]},{"id":"SINIESTRO_6_1735933845005","fecha":"2024-12-15","cliente":"RODRIGUEZ MARIA","dni":"32567890","celular":"1156789012","aseguradoEn":"FEDERACION","contra":"SANCOR","numeroReclamo":"FED2024089","observacion":"CASO FINALIZADO CON ACUERDO TOTAL","fechaRevision":"","estado":"FINALIZADA","acuerdo":"SI","fechaPago":"2025-01-15","presupuesto":1250000,"indemnizacion":1250000,"honorarios":187500,"factura":"SI","observaciones":[{"id":"obs_6","fecha":"2025-01-10","texto":"CASO FINALIZADO CON ACUERDO TOTAL","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_7_1735933845006","fecha":"2024-11-20","cliente":"MARTINEZ CARLOS","dni":"29345678","celular":"1167890123","aseguradoEn":"RIVADAVIA","contra":"ZURICH","numeroReclamo":"RIV2024045","observacion":"FINALIZADO CON PAGO PARCIAL ACORDADO","fechaRevision":"","estado":"FINALIZADA P","acuerdo":"SI","fechaPago":"2024-12-25","presupuesto":2100000,"indemnizacion":1575000,"honorarios":236250,"factura":"SI","observaciones":[{"id":"obs_7","fecha":"2024-12-20","texto":"FINALIZADO CON PAGO PARCIAL ACORDADO","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_8_1735933845007","fecha":"2025-01-10","cliente":"LOPEZ PATRICIA","dni":"30456789","celular":"1178901234","aseguradoEn":"COPAN","contra":"LA CAJA","numeroReclamo":"CP2025002","observacion":"DOCUMENTACION ADICIONAL SOLICITADA","fechaRevision":"2025-03-01","estado":"DEMORADA","acuerdo":"","fechaPago":"","presupuesto":675000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_8","fecha":"2025-02-01","texto":"DOCUMENTACION ADICIONAL SOLICITADA","proximaRevision":"2025-03-01","completed":false}]},{"id":"SINIESTRO_9_1735933845008","fecha":"2024-10-15","cliente":"GARCIA FERNANDO","dni":"31567890","celular":"1189012345","aseguradoEn":"FEDERACION","contra":"ORBIS","numeroReclamo":"FED2024067","observacion":"PERITAJE FAVORABLE, EN LIQUIDACION","fechaRevision":"2025-01-15","estado":"EJECUCION","acuerdo":"","fechaPago":"","presupuesto":1450000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_9","fecha":"2024-11-30","texto":"PERITAJE FAVORABLE, EN LIQUIDACION","proximaRevision":"2025-01-15","completed":false}]},{"id":"SINIESTRO_10_1735933845009","fecha":"2024-09-05","cliente":"FERNANDEZ ANA","dni":"27890123","celular":"1190123456","aseguradoEn":"RIVADAVIA","contra":"SANCOR","numeroReclamo":"RIV2024034","observacion":"RECHAZADO POR FALTA DE COBERTURA","fechaRevision":"","estado":"RECHAZADO","acuerdo":"","fechaPago":"","presupuesto":820000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_10","fecha":"2024-10-15","texto":"RECHAZADO POR FALTA DE COBERTURA","proximaRevision":"","completed":true}]}];
         let siniestrosData = [];
         let editingSiniestroId = null, editingField = null;
@@ -208,9 +205,9 @@
         }
         function sanitizeData(data) {
             let sanitized = false;
-            data.forEach(s => {
+            (data || []).forEach(s => {
                 if (!s.id) { s.id = generateId(s); sanitized = true; }
-                if (!s.observaciones) { s.observaciones = []; sanitized = true; }
+                if (!Array.isArray(s.observaciones)) { s.observaciones = []; sanitized = true; }
                 s.observaciones.forEach(obs => {
                     if (!obs.id) { obs.id = generateId({}); sanitized = true; }
                     if (typeof obs.completed === 'undefined') { obs.completed = false; sanitized = true; }
@@ -228,9 +225,13 @@
             el.style.color = isError ? '#721c24' : '#155724';
         }
         function formatDate(dateString) { if (!dateString) return 'No definida'; return new Date(dateString + 'T00:00:00').toLocaleDateString('es-AR', { timeZone: 'UTC' }); }
-        function isToday(dateString) { if (!dateString) return false; return new Date().toDateString() === new Date(dateString + 'T00:00:00').toDateString(); }
-        function isPastDue(dateString) { if (!dateString) return false; const today = new Date(); today.setHours(0, 0, 0, 0); return new Date(dateString + 'T00:00:00') < today; }
-        function getDaysDifference(dateString) { if (!dateString) return 999; const today = new Date(); today.setHours(0, 0, 0, 0); return Math.ceil((new Date(dateString + 'T00:00:00') - today) / (1000 * 60 * 60 * 24)); }
+        function getTodayYMD() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+        const todayYMD = getTodayYMD();
+
+        function isToday(dateString) { if (!dateString) return false; return dateString === todayYMD; }
+        function isPastDue(dateString) { if (!dateString) return false; return dateString < todayYMD; }
+        function getDaysDifference(dateString) { if (!dateString) return 999; const today = new Date(todayYMD); const target = new Date(dateString); return Math.ceil((target - today) / (1000 * 60 * 60 * 24)); }
+        
         function generateId(item) { return `SIN_${(item.cliente || 'S').slice(0,3).toUpperCase()}_${Date.now()}`; }
         function getDisplayName(s) { return `${s.cliente} - Reclamo: ${s.numeroReclamo || 'S/N'} (${s.estado})`; }
         function formatCurrency(amount) { if (!amount) return 'S/D'; return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount); }
@@ -238,7 +239,7 @@
         function updateSiniestroNextRevision(siniestro) {
             const futureObs = (siniestro.observaciones || [])
                 .filter(obs => !obs.completed && obs.proximaRevision)
-                .sort((a, b) => new Date(a.proximaRevision) - new Date(b.proximaRevision));
+                .sort((a, b) => a.proximaRevision.localeCompare(b.proximaRevision));
             
             if (futureObs.length > 0) {
                 siniestro.fechaRevision = futureObs[0].proximaRevision;
@@ -270,8 +271,8 @@
         function renderDashboardLists() {
             const allTasks = siniestrosData.flatMap(siniestro => (siniestro.observaciones || []).map(obs => ({...obs, siniestro})));
             const todayTasks = allTasks.filter(task => !task.completed && isToday(task.proximaRevision));
-            const overdueTasks = allTasks.filter(task => !task.completed && isPastDue(task.proximaRevision)).sort((a,b) => new Date(a.proximaRevision) - new Date(b.proximaRevision));
-            const upcomingTasks = allTasks.filter(task => !task.completed && getDaysDifference(task.proximaRevision) > 0).sort((a,b) => new Date(a.proximaRevision) - new Date(b.proximaRevision));
+            const overdueTasks = allTasks.filter(task => !task.completed && isPastDue(task.proximaRevision)).sort((a,b) => a.proximaRevision.localeCompare(b.proximaRevision));
+            const upcomingTasks = allTasks.filter(task => !task.completed && !isToday(task.proximaRevision) && !isPastDue(task.proximaRevision)).sort((a,b) => a.proximaRevision.localeCompare(b.proximaRevision));
 
             renderReviewList('todayReviews', todayTasks, 'No hay revisiones para hoy', 'today');
             renderReviewList('overdueReviews', overdueTasks, 'No hay revisiones vencidas', 'overdue');
@@ -297,7 +298,7 @@
                 const matchesSearch = !searchTerm || Object.values(s).some(val => String(val).toLowerCase().includes(searchTerm));
                 const matchesEstado = !estadoFilter || s.estado === estadoFilter;
                 return matchesSearch && matchesEstado;
-            }).sort((a, b) => (new Date(a.fechaRevision) || 0) - (new Date(b.fechaRevision) || 0));
+            }).sort((a, b) => (a.fechaRevision || '9999').localeCompare(b.fechaRevision || '9999'));
 
             document.getElementById('allSiniestros').innerHTML = filteredData.length === 0 ? '<p>No se encontraron siniestros.</p>' : filteredData.map(s => {
                 const hasPendingTask = (s.observaciones || []).some(obs => !obs.completed && obs.proximaRevision);
@@ -331,11 +332,8 @@
                 </div>
                 <div class="observations-history">
                     <h4>📝 Historial de Tareas</h4>
-                    <div style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;">
-                        ${(siniestro.observaciones || []).length > 0 ? [...siniestro.observaciones].sort((a, b) => new Date(b.proximaRevision) - new Date(a.proximaRevision)).map(obs => {
-                            const isNextTask = obs.proximaRevision === siniestro.fechaRevision && obs.texto === siniestro.observacion && !obs.completed;
-                            return `<div class="obs-item ${obs.completed ? 'completed' : ''}" style="${isNextTask ? 'border-left-color: #e74c3c;' : ''}"><div class="obs-date">${formatDate(obs.fecha)} ${isNextTask ? '(PRÓXIMA TAREA)' : ''}</div><div class="obs-text">${obs.texto}</div><div class="obs-revision-date">Revisión: ${formatDate(obs.proximaRevision)}</div></div>`;
-                        }).join('') : '<p>No hay tareas.</p>'}
+                    <div id="obs-list-${siniestro.id}" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;">
+                        ${renderObsList(siniestro)}
                     </div>
                 </div>
                 <form class="form-section" onsubmit="addObservation(event, '${siniestro.id}')"><h4>➕ Agregar Tarea</h4><div class="form-group"><label>Texto</label><textarea id="newObsText" rows="2" required></textarea></div><div class="form-group"><label>Fecha de Revisión</label><input type="date" id="newRevisionDate" required></div><button type="submit" class="btn btn-success">💾 Guardar Tarea</button></form>
@@ -343,6 +341,54 @@
             document.getElementById('siniestroInfoModal').querySelector('.modal-content').innerHTML = content;
             document.getElementById('siniestroInfoModal').classList.add('active');
         }
+
+        // *** FUNCTIONS FOR EDITING AND DELETING TASKS ***
+        function renderObsList(siniestro) {
+            return (siniestro.observaciones || []).length > 0 ? [...siniestro.observaciones].sort((a, b) => b.proximaRevision.localeCompare(a.proximaRevision)).map(obs => {
+                const isNextTask = obs.proximaRevision === siniestro.fechaRevision && !obs.completed;
+                return `<div id="obs-item-${obs.id}" class="obs-item ${obs.completed ? 'completed' : ''}" style="${isNextTask ? 'border-left-color: #e74c3c;' : ''}">
+                    <div class="obs-date">Creación: ${formatDate(obs.fecha)}</div>
+                    <div class="obs-text">${obs.texto}</div>
+                    <div class="obs-revision-date">Revisión: ${formatDate(obs.proximaRevision)}</div>
+                    <button class="btn btn-sm" onclick="editObs('${siniestro.id}', '${obs.id}')">Editar</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteObs('${siniestro.id}', '${obs.id}')">Eliminar</button>
+                </div>`;
+            }).join('');
+        }
+
+        function editObs(siniestroId, obsId) {
+            const siniestro = siniestrosData.find(s => s.id === siniestroId);
+            const obs = siniestro.observaciones.find(o => o.id === obsId);
+            const itemElement = document.getElementById(`obs-item-${obsId}`);
+            itemElement.innerHTML = `
+                <div class="form-group"><label>Texto</label><textarea id="edit-obs-text-${obsId}" rows="2">${obs.texto}</textarea></div>
+                <div class="form-group"><label>Fecha Revisión</label><input type="date" id="edit-obs-revision-${obsId}" value="${obs.proximaRevision}"></div>
+                <button class="btn btn-success btn-sm" onclick="saveObs('${siniestroId}', '${obsId}')">Guardar</button>
+                <button class="btn btn-sm" onclick="showSiniestroModal('${siniestroId}')">Cancelar</button>
+            `;
+        }
+
+        function saveObs(siniestroId, obsId) {
+            const siniestro = siniestrosData.find(s => s.id === siniestroId);
+            const obs = siniestro.observaciones.find(o => o.id === obsId);
+            obs.texto = document.getElementById(`edit-obs-text-${obsId}`).value;
+            obs.proximaRevision = document.getElementById(`edit-obs-revision-${obsId}`).value;
+            updateSiniestroNextRevision(siniestro);
+            saveData();
+            renderAll();
+            showSiniestroModal(siniestroId);
+        }
+        
+        function deleteObs(siniestroId, obsId) {
+            if (!confirm('¿Estás seguro de que quieres eliminar esta tarea?')) return;
+            const siniestro = siniestrosData.find(s => s.id === siniestroId);
+            siniestro.observaciones = siniestro.observaciones.filter(o => o.id !== obsId);
+            updateSiniestroNextRevision(siniestro);
+            saveData();
+            renderAll();
+            showSiniestroModal(siniestroId);
+        }
+        // *** END OF TASK FUNCTIONS ***
 
         function editField(siniestroId, fieldName, currentValue) {
             editingSiniestroId = siniestroId; editingField = fieldName;
@@ -366,7 +412,7 @@
             event.preventDefault();
             const siniestro = siniestrosData.find(s => s.id === siniestroId);
             if (!siniestro) return;
-            siniestro.observaciones.push({ id: generateId({}), fecha: new Date().toISOString().split('T')[0], texto: document.getElementById('newObsText').value, proximaRevision: document.getElementById('newRevisionDate').value, completed: false });
+            siniestro.observaciones.push({ id: generateId({}), fecha: getTodayYMD(), texto: document.getElementById('newObsText').value, proximaRevision: document.getElementById('newRevisionDate').value, completed: false });
             updateSiniestroNextRevision(siniestro);
             saveData(); renderAll(); showSiniestroModal(siniestroId);
         }
@@ -379,9 +425,9 @@
             const worksheet = XLSX.utils.json_to_sheet(excelData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Siniestros');
-            XLSX.writeFile(workbook, `Siniestros_${new Date().toISOString().split('T')[0]}.xlsx`);
+            XLSX.writeFile(workbook, `Siniestros_${getTodayYMD()}.xlsx`);
         }
-        function exportData() { const dataStr = JSON.stringify(siniestrosData, null, 2); const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([dataStr], {type: 'application/json'})); link.download = `siniestros_${new Date().toISOString().split('T')[0]}.json`; link.click(); }
+        function exportData() { const dataStr = JSON.stringify(siniestrosData, null, 2); const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([dataStr], {type: 'application/json'})); link.download = `siniestros_${getTodayYMD()}.json`; link.click(); }
         function importData() { document.getElementById('importInput').click(); }
         function handleImport(event) {
             const file = event.target.files[0]; if (!file) return;
@@ -400,7 +446,7 @@
                 const newSiniestro = { id: generateId({}), cliente: document.getElementById('newCliente').value.toUpperCase(), dni: document.getElementById('newDni').value, celular: document.getElementById('newCelular').value, estado: document.getElementById('newEstado').value, aseguradoEn: document.getElementById('newAseguradoEn').value.toUpperCase(), contra: document.getElementById('newContra').value.toUpperCase(), numeroReclamo: document.getElementById('newNumeroReclamo').value, presupuesto: document.getElementById('newPresupuesto').value, observaciones: [] };
                 const obsText = document.getElementById('newObservacion').value;
                 const revDate = document.getElementById('newFechaRevision').value;
-                if (obsText && revDate) { newSiniestro.observaciones.push({ id: generateId({}), fecha: new Date().toISOString().split('T')[0], texto: obsText, proximaRevision: revDate, completed: false }); }
+                if (obsText && revDate) { newSiniestro.observaciones.push({ id: generateId({}), fecha: getTodayYMD(), texto: obsText, proximaRevision: revDate, completed: false }); }
                 updateSiniestroNextRevision(newSiniestro);
                 siniestrosData.push(newSiniestro);
                 saveData(); renderAll(); closeModal('newSiniestroModal'); e.target.reset();
@@ -412,7 +458,7 @@
         window.addEventListener('click', e => { if (e.target.classList.contains('modal')) closeModal(e.target.id); });
     </script>
     
-    <!-- SECCIÓN DE CÓDIGO DE GOOGLE DRIVE -->
+    <!-- GOOGLE DRIVE SECTION -->
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
     <script>
@@ -430,7 +476,7 @@
         async function initializeGapiClient() { await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] }); gapiInited = true; maybeEnableButtons(); }
         function gisLoaded() { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: SCOPES, callback: '' }); gisInited = true; maybeEnableButtons(); }
         function maybeEnableButtons() { if (gapiInited && gisInited) connectDriveBtn.onclick = handleAuthClick; }
-        function updateDriveStatus(message, isConnected = false) { driveStatusEl.style.display = 'block'; driveStatusEl.textContent = message; driveStatusEl.style.background = isConnected ? '#d1e7dd' : '#fff3cd'; driveStatusEl.style.color = isConnected ? '#0f5132' : '#664d03'; }
+        function updateDriveStatus(message, isConnected = false) { driveStatusEl.style.display = 'block'; driveStatusEl.textContent = message; driveStatusEl.style.backgroundColor = isConnected ? '#d1e7dd' : '#fff3cd'; driveStatusEl.style.color = isConnected ? '#0f5132' : '#664d03'; }
 
         function handleAuthClick() {
             tokenClient.callback = async (resp) => {
