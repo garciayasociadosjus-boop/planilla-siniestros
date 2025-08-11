@@ -204,12 +204,12 @@
             updateDataStatus(savedData ? '✅ Datos cargados' : '📋 Planilla lista con datos iniciales');
         }
         function sanitizeData(data) {
-            data.forEach(s => {
-                s.id = s.id || generateId(s);
-                s.observaciones = Array.isArray(s.observaciones) ? s.observaciones : [];
+            (data || []).forEach(s => {
+                if (!s.id) { s.id = generateId(s); }
+                if (!Array.isArray(s.observaciones)) { s.observaciones = []; }
                 s.observaciones.forEach(obs => {
-                    obs.id = obs.id || generateId({});
-                    obs.completed = obs.completed || false;
+                    if (!obs.id) { obs.id = generateId({}); }
+                    if (typeof obs.completed === 'undefined') { obs.completed = false; }
                 });
                 updateSiniestroNextRevision(s);
             });
@@ -226,7 +226,10 @@
         // --- DATE LOGIC ---
         function getTodayYMD() {
             const d = new Date();
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
         const todayYMD = getTodayYMD();
 
@@ -243,7 +246,7 @@
             const target = new Date(dateString);
             return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
         }
-
+        
         function generateId(item) { return `SIN_${(item.cliente || 'S').slice(0,3).toUpperCase()}_${Date.now()}`; }
         function getDisplayName(s) { return `${s.cliente} - Reclamo: ${s.numeroReclamo || 'S/N'} (${s.estado})`; }
         function formatCurrency(amount) { if (!amount) return 'S/D'; return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount); }
@@ -279,10 +282,10 @@
         }
 
         function renderDashboardLists() {
-            const allTasks = siniestrosData.flatMap(s => s.observaciones.map(obs => ({...obs, siniestro: s })));
-            const todayTasks = allTasks.filter(t => !t.completed && isToday(t.proximaRevision));
-            const overdueTasks = allTasks.filter(t => !t.completed && isPastDue(t.proximaRevision)).sort((a,b) => a.proximaRevision.localeCompare(b.proximaRevision));
-            const upcomingTasks = allTasks.filter(t => !t.completed && !isToday(t.proximaRevision) && !isPastDue(t.proximaRevision)).sort((a,b) => a.proximaRevision.localeCompare(b.proximaRevision));
+            const allTasks = siniestrosData.flatMap(siniestro => (siniestro.observaciones || []).map(obs => ({...obs, siniestro})));
+            const todayTasks = allTasks.filter(task => !task.completed && isToday(task.proximaRevision));
+            const overdueTasks = allTasks.filter(task => !task.completed && isPastDue(task.proximaRevision)).sort((a,b) => a.proximaRevision.localeCompare(b.proximaRevision));
+            const upcomingTasks = allTasks.filter(task => !task.completed && !isToday(task.proximaRevision) && !isPastDue(task.proximaRevision)).sort((a,b) => a.proximaRevision.localeCompare(b.proximaRevision));
 
             renderReviewList('todayReviews', todayTasks, 'No hay revisiones para hoy', 'today');
             renderReviewList('overdueReviews', overdueTasks, 'No hay revisiones vencidas', 'overdue');
@@ -304,10 +307,11 @@
         function renderAllSiniestrosList() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const estadoFilter = document.getElementById('estadoFilter').value;
-            const filteredData = siniestrosData.filter(s => 
-                (!searchTerm || Object.values(s).some(val => String(val).toLowerCase().includes(searchTerm))) &&
-                (!estadoFilter || s.estado === estadoFilter)
-            ).sort((a, b) => (a.fechaRevision || '9999').localeCompare(b.fechaRevision || '9999'));
+            const filteredData = siniestrosData.filter(s => {
+                const matchesSearch = !searchTerm || Object.values(s).some(val => String(val).toLowerCase().includes(searchTerm));
+                const matchesEstado = !estadoFilter || s.estado === estadoFilter;
+                return matchesSearch && matchesEstado;
+            }).sort((a, b) => (a.fechaRevision || '9999').localeCompare(b.fechaRevision || '9999'));
 
             document.getElementById('allSiniestros').innerHTML = filteredData.length === 0 ? '<p>No se encontraron siniestros.</p>' : filteredData.map(s => {
                 const hasPendingTask = (s.observaciones || []).some(obs => !obs.completed && obs.proximaRevision);
@@ -328,8 +332,8 @@
         function showSiniestroModal(siniestroId) {
             const siniestro = siniestrosData.find(s => s.id === siniestroId);
             if (!siniestro) return;
-            const modalContentEl = document.getElementById('siniestroInfoModal').querySelector('.modal-content');
-            modalContentEl.innerHTML = `
+            updateSiniestroNextRevision(siniestro);
+            const content = `
                 <span class="close" onclick="closeModal('siniestroInfoModal')">&times;</span><h2>🏥 ${siniestro.cliente}</h2>
                 <div class="client-info">
                     <h4>📋 Información del Siniestro</h4>
@@ -347,14 +351,13 @@
                 </div>
                 <form class="form-section" onsubmit="addObservation(event, '${siniestro.id}')"><h4>➕ Agregar Tarea</h4><div class="form-group"><label>Texto</label><textarea id="newObsText" rows="2" required></textarea></div><div class="form-group"><label>Fecha de Revisión</label><input type="date" id="newRevisionDate" required></div><button type="submit" class="btn btn-success">💾 Guardar Tarea</button></form>
                 <div class="action-buttons"><button class="btn btn-info" onclick="showDocumentModal('${siniestro.id}')">📁 Gestionar Documentos</button><button class="btn btn-danger" onclick="deleteSiniestro('${siniestro.id}')">🗑️ Eliminar Siniestro</button></div>`;
+            document.getElementById('siniestroInfoModal').querySelector('.modal-content').innerHTML = content;
             document.getElementById('siniestroInfoModal').classList.add('active');
         }
 
-        // =================================================================
-        // ===== FUNCIONES DE EDICIÓN Y ELIMINACIÓN DE TAREAS AÑADIDAS =====
-        // =================================================================
+        // --- TASK EDIT/DELETE FUNCTIONS ---
         function renderObsList(siniestro) {
-            return (siniestro.observaciones || []).length === 0 ? '<p>No hay tareas.</p>' : [...siniestro.observaciones].sort((a, b) => (b.proximaRevision || '').localeCompare(a.proximaRevision || '')).map(obs => {
+            return (siniestro.observaciones || []).length > 0 ? [...siniestro.observaciones].sort((a, b) => (b.proximaRevision || '').localeCompare(a.proximaRevision || '')).map(obs => {
                 const isNextTask = obs.proximaRevision === siniestro.fechaRevision && !obs.completed;
                 return `<div id="obs-item-${obs.id}" class="obs-item ${obs.completed ? 'completed' : ''}" style="${isNextTask ? 'border-left-color: #e74c3c;' : ''}">
                     <div class="obs-date">Creación: ${formatDate(obs.fecha)}</div>
@@ -363,7 +366,7 @@
                     <button class="btn btn-sm" onclick="editObs('${siniestro.id}', '${obs.id}')">Editar</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteObs('${siniestro.id}', '${obs.id}')">Eliminar</button>
                 </div>`;
-            }).join('');
+            }).join('') : '<p>No hay tareas.</p>';
         }
 
         function editObs(siniestroId, obsId) {
@@ -397,9 +400,6 @@
             renderAll();
             showSiniestroModal(siniestroId);
         }
-        // =================================================================
-        // =================== FIN DE SECCIÓN AÑADIDA ======================
-        // =================================================================
 
         function editField(siniestroId, fieldName, currentValue) {
             editingSiniestroId = siniestroId; editingField = fieldName;
