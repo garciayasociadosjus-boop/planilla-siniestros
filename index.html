@@ -223,7 +223,6 @@
             el.style.color = isError ? '#721c24' : '#155724';
         }
 
-        // --- DATE LOGIC ---
         function getTodayYMD() {
             const d = new Date();
             const year = d.getFullYear();
@@ -285,7 +284,8 @@
             const allTasks = siniestrosData.flatMap(siniestro => (siniestro.observaciones || []).map(obs => ({...obs, siniestro})));
             const todayTasks = allTasks.filter(task => !task.completed && isToday(task.proximaRevision));
             const overdueTasks = allTasks.filter(task => !task.completed && isPastDue(task.proximaRevision)).sort((a,b) => a.proximaRevision.localeCompare(b.proximaRevision));
-            const upcomingTasks = allTasks.filter(task => !task.completed && !isToday(task.proximaRevision) && !isPastDue(task.proximaRevision)).sort((a,b) => a.proximaRevision.localeCompare(b.proximaRevision));
+            // --- LÍNEA CORREGIDA ---
+            const upcomingTasks = allTasks.filter(task => !task.completed && getDaysDifference(task.proximaRevision) > 0).sort((a,b) => a.proximaRevision.localeCompare(b.proximaRevision));
 
             renderReviewList('todayReviews', todayTasks, 'No hay revisiones para hoy', 'today');
             renderReviewList('overdueReviews', overdueTasks, 'No hay revisiones vencidas', 'overdue');
@@ -355,7 +355,6 @@
             document.getElementById('siniestroInfoModal').classList.add('active');
         }
 
-        // --- TASK EDIT/DELETE FUNCTIONS ---
         function renderObsList(siniestro) {
             return (siniestro.observaciones || []).length > 0 ? [...siniestro.observaciones].sort((a, b) => (b.proximaRevision || '').localeCompare(a.proximaRevision || '')).map(obs => {
                 const isNextTask = obs.proximaRevision === siniestro.fechaRevision && !obs.completed;
