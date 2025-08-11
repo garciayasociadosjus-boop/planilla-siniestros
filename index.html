@@ -132,31 +132,15 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🏥 Planilla de Siniestros</h1>
-            <p>García & Asociados - Gestión de Reclamos y Seguros</p>
-        </div>
-
+        <div class="header"><h1>🏥 Planilla de Siniestros</h1><p>García & Asociados - Gestión de Reclamos y Seguros</p></div>
         <div class="main-content">
             <div id="dataStatus" class="data-status">Cargando datos...</div>
             <div id="driveStatus" class="data-status" style="margin-top: -10px; display: none;"></div>
-
-            <!-- DASHBOARD DE TAREAS -->
             <div class="dashboard">
-                <div class="card today-reviews">
-                    <h3><svg class="icon" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>Revisiones de Hoy</h3>
-                    <div class="reviews-list" id="todayReviews"></div>
-                </div>
-                <div class="card overdue-reviews">
-                    <h3><svg class="icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>Revisiones Vencidas</h3>
-                    <div class="reviews-list" id="overdueReviews"></div>
-                </div>
-                <div class="card pending-reviews">
-                    <h3><svg class="icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>Próximas Revisiones</h3>
-                    <div class="reviews-list" id="upcomingReviews"></div>
-                </div>
+                <div class="card today-reviews"><h3><svg class="icon" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>Revisiones de Hoy</h3><div class="reviews-list" id="todayReviews"></div></div>
+                <div class="card overdue-reviews"><h3><svg class="icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>Revisiones Vencidas</h3><div class="reviews-list" id="overdueReviews"></div></div>
+                <div class="card pending-reviews"><h3><svg class="icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>Próximas Revisiones</h3><div class="reviews-list" id="upcomingReviews"></div></div>
             </div>
-
             <div style="text-align: center; margin-bottom: 30px;">
                 <button class="btn btn-success" onclick="showNewSiniestroModal()">➕ Agregar Siniestro</button>
                 <button class="btn" onclick="showSiniestroSelectorModal()">👁️ Ver/Editar Siniestro</button>
@@ -164,40 +148,45 @@
                 <button class="btn" onclick="exportData()">💾 Exportar JSON</button>
                 <button class="btn btn-warning" onclick="importData()">📥 Importar Datos</button>
             </div>
-            
-            <!-- BOTONES DE GOOGLE DRIVE -->
             <div style="text-align: center; margin-bottom: 30px; border-top: 1px solid #ddd; padding-top: 20px;">
                 <button id="connectDriveBtn" class="btn">🔗 Conectar a Drive</button>
                 <button id="saveToDriveBtn" class="btn btn-success" style="display:none;">📤 Guardar en Drive</button>
                 <button id="loadFromDriveBtn" class="btn btn-warning" style="display:none;">📥 Cargar de Drive</button>
             </div>
-
             <div class="filter-bar">
                 <div class="form-group"><label>Búsqueda General</label><input type="text" id="searchInput" placeholder="Buscar por cliente, DNI, reclamo, etc." onkeyup="renderAllSiniestrosList()"></div>
                 <div class="form-group"><label>Filtrar por Estado</label><select id="estadoFilter" onchange="renderAllSiniestrosList()"><option value="">Todos los estados</option><option value="RECHAZADO">Rechazado</option><option value="FINALIZADA">Finalizada</option><option value="FINALIZADA P">Finalizada P</option><option value="EJECUCION">Ejecución</option><option value="DEMORADA">Demorada</option></select></div>
             </div>
-
-            <div class="card">
-                <h3>📋 Todos los Siniestros (Ordenados por fecha de revisión)</h3>
-                <div class="reviews-list" id="allSiniestros" style="max-height: 600px;"></div>
-            </div>
+            <div class="card"><h3>📋 Todos los Siniestros (Ordenados por fecha de revisión)</h3><div class="reviews-list" id="allSiniestros" style="max-height: 600px;"></div></div>
         </div>
     </div>
-
     <input type="file" id="importInput" accept=".json" style="display: none;" onchange="handleImport(event)">
     <input type="file" id="documentUploadInput" style="display: none;">
-
     <div id="newSiniestroModal" class="modal"><div class="modal-content"></div></div>
     <div id="siniestroSelectorModal" class="modal"><div class="modal-content"></div></div>
     <div id="siniestroInfoModal" class="modal"><div class="modal-content"></div></div>
     <div id="documentModal" class="modal"><div class="modal-content"></div></div>
     
     <script>
+        // --- INITIAL DATA & STATE ---
         const initialData = [{"id":"SINIESTRO_1_1735933845000","fecha":"","cliente":"GONCALVES BEATRIZ","dni":"22108382","celular":"1164233680","aseguradoEn":"RIVADAVIA","contra":"ORBIS","numeroReclamo":"232644","observacion":"SE INFORMO A CLIENTE QUE NO SE DARA RESOLUCION POR ORBIS NO DA RESPUESTA","fechaRevision":"","estado":"RECHAZADO","acuerdo":"","fechaPago":"","presupuesto":1140000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_1","fecha":"2025-04-30","texto":"SE INFORMO A CLIENTE QUE NO SE DARA RESOLUCION POR ORBIS NO DA RESPUESTA","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_2_1735933845001","fecha":"2025-05-06","cliente":"GRANADO MIGUEL ANGEL","dni":"21543471","celular":"1173653571","aseguradoEn":"COPAN","contra":"ZURICH","numeroReclamo":"0","observacion":"SE INFOMO A CLIENTE QUE ZURICH NO CUBRE EL PARABRISAS","fechaRevision":"","estado":"RECHAZADO","acuerdo":"","fechaPago":"","presupuesto":285999.99,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_2","fecha":"2025-05-20","texto":"SE INFOMO A CLIENTE QUE ZURICH NO CUBRE EL PARABRISAS","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_3_1735933845002","fecha":"","cliente":"SILGUEIRO VICTOR","dni":"34566518","celular":"","aseguradoEn":"FEDERACION","contra":"LA CAJA","numeroReclamo":"54000113645","observacion":"SE FUE CON NEMESIS","fechaRevision":"","estado":"RECHAZADO","acuerdo":"","fechaPago":"","presupuesto":1074000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_3","fecha":"2025-05-26","texto":"SE FUE CON NEMESIS","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_4_1735933845003","fecha":"","cliente":"GALEPPI SUSANA","dni":"11130200","celular":"1151388650","aseguradoEn":"GALENO","contra":"SAN CRISTÓBAL","numeroReclamo":"UC368744","observacion":"NO HIZO LA DENUECIA LE 3RO","fechaRevision":"","estado":"RECHAZADO","acuerdo":"","fechaPago":"","presupuesto":530000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_4","fecha":"2025-05-26","texto":"NO HIZO LA DENUECIA LE 3RO","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_5_1735933845004","fecha":"2025-04-01","cliente":"ALVAREZ CLAUDIA","dni":"28456789","celular":"1145678901","aseguradoEn":"COPAN","contra":"FEDERACION","numeroReclamo":"CP2025001","observacion":"PERITAJE REALIZADO, ESPERANDO LIQUIDACION","fechaRevision":"2025-05-01","estado":"EJECUCION","acuerdo":"","fechaPago":"","presupuesto":890000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_5","fecha":"2025-04-15","texto":"PERITAJE REALIZADO, ESPERANDO LIQUIDACION","proximaRevision":"2025-05-01","completed":false}]},{"id":"SINIESTRO_6_1735933845005","fecha":"2024-12-15","cliente":"RODRIGUEZ MARIA","dni":"32567890","celular":"1156789012","aseguradoEn":"FEDERACION","contra":"SANCOR","numeroReclamo":"FED2024089","observacion":"CASO FINALIZADO CON ACUERDO TOTAL","fechaRevision":"","estado":"FINALIZADA","acuerdo":"SI","fechaPago":"2025-01-15","presupuesto":1250000,"indemnizacion":1250000,"honorarios":187500,"factura":"SI","observaciones":[{"id":"obs_6","fecha":"2025-01-10","texto":"CASO FINALIZADO CON ACUERDO TOTAL","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_7_1735933845006","fecha":"2024-11-20","cliente":"MARTINEZ CARLOS","dni":"29345678","celular":"1167890123","aseguradoEn":"RIVADAVIA","contra":"ZURICH","numeroReclamo":"RIV2024045","observacion":"FINALIZADO CON PAGO PARCIAL ACORDADO","fechaRevision":"","estado":"FINALIZADA P","acuerdo":"SI","fechaPago":"2024-12-25","presupuesto":2100000,"indemnizacion":1575000,"honorarios":236250,"factura":"SI","observaciones":[{"id":"obs_7","fecha":"2024-12-20","texto":"FINALIZADO CON PAGO PARCIAL ACORDADO","proximaRevision":"","completed":true}]},{"id":"SINIESTRO_8_1735933845007","fecha":"2025-01-10","cliente":"LOPEZ PATRICIA","dni":"30456789","celular":"1178901234","aseguradoEn":"COPAN","contra":"LA CAJA","numeroReclamo":"CP2025002","observacion":"DOCUMENTACION ADICIONAL SOLICITADA","fechaRevision":"2025-03-01","estado":"DEMORADA","acuerdo":"","fechaPago":"","presupuesto":675000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_8","fecha":"2025-02-01","texto":"DOCUMENTACION ADICIONAL SOLICITADA","proximaRevision":"2025-03-01","completed":false}]},{"id":"SINIESTRO_9_1735933845008","fecha":"2024-10-15","cliente":"GARCIA FERNANDO","dni":"31567890","celular":"1189012345","aseguradoEn":"FEDERACION","contra":"ORBIS","numeroReclamo":"FED2024067","observacion":"PERITAJE FAVORABLE, EN LIQUIDACION","fechaRevision":"2025-01-15","estado":"EJECUCION","acuerdo":"","fechaPago":"","presupuesto":1450000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_9","fecha":"2024-11-30","texto":"PERITAJE FAVORABLE, EN LIQUIDACION","proximaRevision":"2025-01-15","completed":false}]},{"id":"SINIESTRO_10_1735933845009","fecha":"2024-09-05","cliente":"FERNANDEZ ANA","dni":"27890123","celular":"1190123456","aseguradoEn":"RIVADAVIA","contra":"SANCOR","numeroReclamo":"RIV2024034","observacion":"RECHAZADO POR FALTA DE COBERTURA","fechaRevision":"","estado":"RECHAZADO","acuerdo":"","fechaPago":"","presupuesto":820000,"indemnizacion":"","honorarios":"","factura":"NO","observaciones":[{"id":"obs_10","fecha":"2024-10-15","texto":"RECHAZADO POR FALTA DE COBERTURA","proximaRevision":"","completed":true}]}];
         let siniestrosData = [];
         let editingSiniestroId = null, editingField = null;
 
-        // --- CORE FUNCTIONS ---
+        // --- DATE LOGIC (REWRITTEN & FOOLPROOF) ---
+        function getTodayYMD() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+        const todayYMD = getTodayYMD();
+
+        function formatDate(dateString) {
+            if (!dateString) return 'No definida';
+            const [year, month, day] = dateString.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        // --- CORE DATA FUNCTIONS ---
         function saveData() { localStorage.setItem('planilla_siniestros_data', JSON.stringify(siniestrosData)); updateDataStatus('✅ Datos guardados'); }
         function loadData() {
             const savedData = localStorage.getItem('planilla_siniestros_data');
@@ -207,50 +196,17 @@
             updateDataStatus(savedData ? '✅ Datos cargados' : '📋 Planilla lista con datos iniciales');
         }
         function sanitizeData(data) {
-            let sanitized = false;
             data.forEach(s => {
-                if (!s.id) { s.id = generateId(s); sanitized = true; }
-                if (!Array.isArray(s.observaciones)) { s.observaciones = []; sanitized = true; }
+                s.id = s.id || generateId(s);
+                s.observaciones = Array.isArray(s.observaciones) ? s.observaciones : [];
                 s.observaciones.forEach(obs => {
-                    if (!obs.id) { obs.id = generateId({}); sanitized = true; }
-                    if (typeof obs.completed === 'undefined') { obs.completed = false; sanitized = true; }
+                    obs.id = obs.id || generateId({});
+                    obs.completed = obs.completed || false;
                 });
                 updateSiniestroNextRevision(s);
             });
-            if (sanitized) console.log("Data sanitized on load.");
             return data;
         }
-        function updateDataStatus(message, isError = false) {
-            const el = document.getElementById('dataStatus');
-            el.textContent = message;
-            el.style.background = isError ? '#f8d7da' : '#d4edda';
-            el.style.color = isError ? '#721c24' : '#155724';
-        }
-
-        // --- DATE LOGIC (REWRITTEN) ---
-        function getTodayAsYMD() {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-        const todayYMD = getTodayAsYMD();
-
-        function formatDate(dateString) {
-            if (!dateString) return 'No definida';
-            const parts = dateString.split('-');
-            if (parts.length !== 3) return 'Fecha inválida';
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
-        // --- END OF DATE LOGIC ---
-
-        // --- UTILITY FUNCTIONS ---
-        function generateId(item) { return `SIN_${(item.cliente || 'S').slice(0,3).toUpperCase()}_${Date.now()}`; }
-        function getDisplayName(s) { return `${s.cliente} - Reclamo: ${s.numeroReclamo || 'S/N'} (${s.estado})`; }
-        function formatCurrency(amount) { if (!amount) return 'S/D'; return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount); }
-        
-        // --- DATA MANIPULATION ---
         function updateSiniestroNextRevision(siniestro) {
             const pendingTasks = (siniestro.observaciones || [])
                 .filter(obs => !obs.completed && obs.proximaRevision)
@@ -264,30 +220,24 @@
                 siniestro.observacion = 'No hay tareas pendientes';
             }
         }
-        function toggleCompleted(event, siniestroId, obsId) {
-            event.stopPropagation();
-            const siniestro = siniestrosData.find(s => s.id === siniestroId);
-            const obs = siniestro.observaciones.find(o => o.id === obsId);
-            obs.completed = !obs.completed;
-            updateSiniestroNextRevision(siniestro);
-            saveData();
-            renderAll();
+        function updateDataStatus(message, isError = false) {
+            const el = document.getElementById('dataStatus');
+            el.textContent = message;
+            el.style.backgroundColor = isError ? '#f8d7da' : '#d4edda';
+            el.style.color = isError ? '#721c24' : '#155724';
         }
-        
-        // --- RENDER FUNCTIONS ---
+
+        // --- UI & RENDER FUNCTIONS ---
         function renderAll() {
             siniestrosData.forEach(updateSiniestroNextRevision);
             renderDashboardLists();
             renderAllSiniestrosList();
         }
         function renderDashboardLists() {
-            const allTasks = siniestrosData.flatMap(siniestro => (siniestro.observaciones || []).map(obs => ({...obs, siniestro})));
-            
-            const todayTasks = allTasks.filter(task => !task.completed && task.proximaRevision === todayYMD);
-            const overdueTasks = allTasks.filter(task => !task.completed && task.proximaRevision && task.proximaRevision < todayYMD)
-                .sort((a,b) => a.proximaRevision.localeCompare(b.proximaRevision));
-            const upcomingTasks = allTasks.filter(task => !task.completed && task.proximaRevision && task.proximaRevision > todayYMD)
-                .sort((a,b) => a.proximaRevision.localeCompare(b.proximaRevision));
+            const allTasks = siniestrosData.flatMap(s => s.observaciones.map(obs => ({...obs, siniestro: s })));
+            const todayTasks = allTasks.filter(t => !t.completed && t.proximaRevision === todayYMD);
+            const overdueTasks = allTasks.filter(t => !t.completed && t.proximaRevision && t.proximaRevision < todayYMD).sort((a, b) => a.proximaRevision.localeCompare(b.proximaRevision));
+            const upcomingTasks = allTasks.filter(t => !t.completed && t.proximaRevision && t.proximaRevision > todayYMD).sort((a, b) => a.proximaRevision.localeCompare(b.proximaRevision));
 
             renderReviewList('todayReviews', todayTasks, 'No hay revisiones para hoy', 'today');
             renderReviewList('overdueReviews', overdueTasks, 'No hay revisiones vencidas', 'overdue');
@@ -296,35 +246,26 @@
         function renderReviewList(containerId, tasks, emptyMsg, type) {
             const container = document.getElementById(containerId);
             container.innerHTML = tasks.length === 0 ? `<p style="color: rgba(255,255,255,0.8);">${emptyMsg}</p>` : tasks.map(task => {
-                let dateInfo = '';
-                if (type === 'today') dateInfo = 'HOY';
-                else if (type === 'overdue') dateInfo = `VENCIDA - ${formatDate(task.proximaRevision)}`;
-                else dateInfo = `Próxima - ${formatDate(task.proximaRevision)}`;
-                
+                let dateInfo = type === 'today' ? 'HOY' : (type === 'overdue' ? `VENCIDA - ${formatDate(task.proximaRevision)}` : `Próxima - ${formatDate(task.proximaRevision)}`);
                 return `<div class="review-item"><button class="complete-btn" onclick="toggleCompleted(event, '${task.siniestro.id}', '${task.id}')">✔️</button><div class="review-item-content" onclick="showSiniestroModal('${task.siniestro.id}')"><div class="review-date">${dateInfo}</div><div class="review-client">${task.siniestro.cliente}</div><div class="review-obs">${task.texto}</div></div></div>`;
             }).join('');
         }
         function renderAllSiniestrosList() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const estadoFilter = document.getElementById('estadoFilter').value;
-            const filteredData = siniestrosData.filter(s => {
-                const matchesSearch = !searchTerm || Object.values(s).some(val => String(val).toLowerCase().includes(searchTerm));
-                const matchesEstado = !estadoFilter || s.estado === estadoFilter;
-                return matchesSearch && matchesEstado;
-            }).sort((a, b) => (a.fechaRevision || '9999').localeCompare(b.fechaRevision || '9999'));
+            const filteredData = siniestrosData.filter(s => 
+                (!searchTerm || Object.values(s).some(val => String(val).toLowerCase().includes(searchTerm))) &&
+                (!estadoFilter || s.estado === estadoFilter)
+            ).sort((a, b) => (a.fechaRevision || '9999').localeCompare(b.fechaRevision || '9999'));
 
             document.getElementById('allSiniestros').innerHTML = filteredData.length === 0 ? '<p>No se encontraron siniestros.</p>' : filteredData.map(s => {
-                const hasPendingTask = (s.observaciones || []).some(obs => !obs.completed && obs.proximaRevision);
                 let classes = 'review-item';
-                if (!hasPendingTask) classes += ' completed';
+                if (!s.fechaRevision || !(s.observaciones || []).some(o => !o.completed)) classes += ' completed';
                 if (s.fechaRevision === todayYMD) classes += ' today';
                 else if (s.fechaRevision && s.fechaRevision < todayYMD) classes += ' overdue';
-
                 return `<div class="${classes}" onclick="showSiniestroModal('${s.id}')"><div class="review-item-content"><div class="review-date">Próx. Revisión: ${formatDate(s.fechaRevision)}</div><div class="review-client">${s.cliente} - Reclamo: ${s.numeroReclamo || 'S/N'}</div><div class="review-obs">Últ. Tarea: ${s.observacion}</div></div></div>`;
             }).join('');
         }
-        
-        // --- MODAL AND UI FUNCTIONS ---
         function showSiniestroModal(siniestroId) {
             const siniestro = siniestrosData.find(s => s.id === siniestroId);
             if (!siniestro) return;
@@ -351,16 +292,25 @@
             document.getElementById('siniestroInfoModal').classList.add('active');
         }
         function renderObsList(siniestro) {
-            return (siniestro.observaciones || []).length === 0 ? '<p>No hay tareas.</p>' : [...siniestro.observaciones].sort((a,b) => (b.fecha || '').localeCompare(a.fecha || '')).map(obs => {
-                const isNextTask = obs.proximaRevision === siniestro.fechaRevision && obs.texto === siniestro.observacion && !obs.completed;
+            return (siniestro.observaciones || []).length === 0 ? '<p>No hay tareas.</p>' : [...siniestro.observaciones].sort((a, b) => (b.fecha || '').localeCompare(a.fecha || '')).map(obs => {
+                const isNextTask = obs.proximaRevision === siniestro.fechaRevision && !obs.completed;
                 return `<div id="obs-item-${obs.id}" class="obs-item ${obs.completed ? 'completed' : ''}" style="${isNextTask ? 'border-left-color: #e74c3c;' : ''}">
-                    <div class="obs-date">Creación: ${formatDate(obs.fecha)}</div>
-                    <div class="obs-text">${obs.texto}</div>
-                    <div class="obs-revision-date">Revisión: ${formatDate(obs.proximaRevision)}</div>
+                    <div class="obs-date">Creación: ${formatDate(obs.fecha)}</div><div class="obs-text">${obs.texto}</div><div class="obs-revision-date">Revisión: ${formatDate(obs.proximaRevision)}</div>
                     <button class="btn btn-sm" onclick="editObs('${siniestro.id}', '${obs.id}')">Editar</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteObs('${siniestro.id}', '${obs.id}')">Eliminar</button>
                 </div>`;
             }).join('');
+        }
+
+        // --- EVENT HANDLERS & ACTIONS ---
+        function toggleCompleted(event, siniestroId, obsId) {
+            event.stopPropagation();
+            const siniestro = siniestrosData.find(s => s.id === siniestroId);
+            const obs = siniestro.observaciones.find(o => o.id === obsId);
+            obs.completed = !obs.completed;
+            updateSiniestroNextRevision(siniestro);
+            saveData();
+            renderAll();
         }
         function editField(siniestroId, fieldName, currentValue) {
             const fieldElement = document.getElementById(`field-${fieldName}`);
@@ -385,12 +335,7 @@
             const siniestro = siniestrosData.find(s => s.id === siniestroId);
             const obs = siniestro.observaciones.find(o => o.id === obsId);
             const itemElement = document.getElementById(`obs-item-${obsId}`);
-            itemElement.innerHTML = `
-                <div class="form-group"><label>Texto</label><textarea id="edit-obs-text-${obsId}" rows="2">${obs.texto}</textarea></div>
-                <div class="form-group"><label>Fecha Revisión</label><input type="date" id="edit-obs-revision-${obsId}" value="${obs.proximaRevision}"></div>
-                <button class="btn btn-success btn-sm" onclick="saveObs('${siniestroId}', '${obsId}')">Guardar</button>
-                <button class="btn btn-sm" onclick="showSiniestroModal('${siniestroId}')">Cancelar</button>
-            `;
+            itemElement.innerHTML = `<div class="form-group"><label>Texto</label><textarea id="edit-obs-text-${obsId}" rows="2">${obs.texto}</textarea></div><div class="form-group"><label>Fecha Revisión</label><input type="date" id="edit-obs-revision-${obsId}" value="${obs.proximaRevision}"></div><button class="btn btn-success btn-sm" onclick="saveObs('${siniestroId}', '${obsId}')">Guardar</button><button class="btn btn-sm" onclick="showSiniestroModal('${siniestroId}')">Cancelar</button>`;
         }
         function saveObs(siniestroId, obsId) {
             const siniestro = siniestrosData.find(s => s.id === siniestroId);
@@ -415,32 +360,41 @@
         function addObservation(event, siniestroId) {
             event.preventDefault();
             const siniestro = siniestrosData.find(s => s.id === siniestroId);
-            if (!siniestro) return;
             const obsText = document.getElementById('newObsText').value;
             const revDate = document.getElementById('newRevisionDate').value;
             if (obsText && revDate) {
-                siniestro.observaciones.push({ id: generateId({}), fecha: getTodayAsYMD(), texto: obsText, proximaRevision: revDate, completed: false });
+                siniestro.observaciones.push({ id: generateId({}), fecha: getTodayYMD(), texto: obsText, proximaRevision: revDate, completed: false });
                 updateSiniestroNextRevision(siniestro);
                 saveData(); 
                 renderAll(); 
                 showSiniestroModal(siniestroId);
-            } else {
-                alert("Por favor, completa el texto y la fecha de revisión.");
-            }
+            } else { alert("Por favor, completa el texto y la fecha de revisión."); }
         }
-        
-        // --- IMPORT/EXPORT FUNCTIONS ---
+
+        // --- MODAL MANAGEMENT ---
+        function showNewSiniestroModal() { document.getElementById('newSiniestroModal').classList.add('active'); }
+        function showSiniestroSelectorModal() {
+            const selector = document.getElementById('siniestroSelector');
+            selector.innerHTML = '<option value="">-- Seleccionar --</option>' + [...siniestrosData].sort((a, b) => a.cliente.localeCompare(b.cliente)).map(s => `<option value="${s.id}">${getDisplayName(s)}</option>`).join('');
+            document.getElementById('siniestroSelectorModal').classList.add('active');
+        }
+        function loadSiniestroInfo() {
+            const siniestroId = document.getElementById('siniestroSelector').value;
+            if (siniestroId) { closeModal('siniestroSelectorModal'); showSiniestroModal(siniestroId); }
+        }
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
+
+        // --- UTILITY & HELPERS ---
+        function generateId(item) { return `SIN_${(item.cliente || 'S').slice(0,3).toUpperCase()}_${Date.now()}`; }
+        function formatCurrency(amount) { return amount ? new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount) : 'S/D'; }
         function exportToExcel() {
-            const excelData = siniestrosData.map(s => {
-                const allObs = (s.observaciones || []).map(obs => `${formatDate(obs.fecha)} (Rev: ${formatDate(obs.proximaRevision)}): ${obs.texto}`).join(' | ');
-                return { 'Cliente': s.cliente, 'DNI': s.dni, 'Celular': s.celular, 'Estado': s.estado, 'Asegurado En': s.aseguradoEn, 'Contra': s.contra, 'N° Reclamo': s.numeroReclamo, 'Próxima Revisión': formatDate(s.fechaRevision), 'Última Tarea': s.observacion, 'Presupuesto': s.presupuesto, 'Indemnización': s.indemnizacion, 'Honorarios': s.honorarios, 'Historial': allObs };
-            });
+            const excelData = siniestrosData.map(s => ({ 'Cliente': s.cliente, 'DNI': s.dni, 'Celular': s.celular, 'Estado': s.estado, 'Asegurado En': s.aseguradoEn, 'Contra': s.contra, 'N° Reclamo': s.numeroReclamo, 'Próxima Revisión': formatDate(s.fechaRevision), 'Última Tarea': s.observacion, 'Presupuesto': s.presupuesto, 'Indemnización': s.indemnizacion, 'Honorarios': s.honorarios, 'Historial': (s.observaciones || []).map(obs => `${formatDate(obs.fecha)} (Rev: ${formatDate(obs.proximaRevision)}): ${obs.texto}`).join(' | ') }));
             const worksheet = XLSX.utils.json_to_sheet(excelData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Siniestros');
-            XLSX.writeFile(workbook, `Siniestros_${getTodayAsYMD()}.xlsx`);
+            XLSX.writeFile(workbook, `Siniestros_${getTodayYMD()}.xlsx`);
         }
-        function exportData() { const dataStr = JSON.stringify(siniestrosData, null, 2); const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([dataStr], {type: 'application/json'})); link.download = `siniestros_${getTodayAsYMD()}.json`; link.click(); }
+        function exportData() { const dataStr = JSON.stringify(siniestrosData, null, 2); const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([dataStr], {type: 'application/json'})); link.download = `siniestros_${getTodayYMD()}.json`; link.click(); }
         function importData() { document.getElementById('importInput').click(); }
         function handleImport(event) {
             const file = event.target.files[0]; if (!file) return;
@@ -459,9 +413,7 @@
                 const newSiniestro = { id: generateId({}), cliente: document.getElementById('newCliente').value.toUpperCase(), dni: document.getElementById('newDni').value, celular: document.getElementById('newCelular').value, estado: document.getElementById('newEstado').value, aseguradoEn: document.getElementById('newAseguradoEn').value.toUpperCase(), contra: document.getElementById('newContra').value.toUpperCase(), numeroReclamo: document.getElementById('newNumeroReclamo').value, presupuesto: document.getElementById('newPresupuesto').value, observaciones: [] };
                 const obsText = document.getElementById('newObservacion').value;
                 const revDate = document.getElementById('newFechaRevision').value;
-                if (obsText && revDate) {
-                    newSiniestro.observaciones.push({ id: generateId({}), fecha: getTodayAsYMD(), texto: obsText, proximaRevision: revDate, completed: false }); 
-                }
+                if (obsText && revDate) { newSiniestro.observaciones.push({ id: generateId({}), fecha: getTodayYMD(), texto: obsText, proximaRevision: revDate, completed: false }); }
                 updateSiniestroNextRevision(newSiniestro);
                 siniestrosData.push(newSiniestro);
                 saveData(); renderAll(); closeModal('newSiniestroModal'); e.target.reset();
@@ -472,7 +424,7 @@
         window.addEventListener('click', e => { if (e.target.classList.contains('modal')) closeModal(e.target.id); });
     </script>
     
-    <!-- SECCIÓN DE CÓDIGO DE GOOGLE DRIVE -->
+    <!-- GOOGLE DRIVE SECTION -->
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
     <script>
@@ -482,16 +434,13 @@
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
         const DATA_FILE_NAME = 'datos_planilla_siniestros.json';
         const DOCS_FOLDER_NAME = 'Planilla_Siniestros_Documentos';
-
         let tokenClient, gapiInited = false, gisInited = false, dataFileId = null, docsFolderId = null, currentSiniestroIdForDocs = null;
         const driveStatusEl = document.getElementById('driveStatus'), connectDriveBtn = document.getElementById('connectDriveBtn'), saveToDriveBtn = document.getElementById('saveToDriveBtn'), loadFromDriveBtn = document.getElementById('loadFromDriveBtn');
-
         function gapiLoaded() { gapi.load('client', initializeGapiClient); }
         async function initializeGapiClient() { await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] }); gapiInited = true; maybeEnableButtons(); }
         function gisLoaded() { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: SCOPES, callback: '' }); gisInited = true; maybeEnableButtons(); }
         function maybeEnableButtons() { if (gapiInited && gisInited) connectDriveBtn.onclick = handleAuthClick; }
-        function updateDriveStatus(message, isConnected = false) { driveStatusEl.style.display = 'block'; driveStatusEl.textContent = message; driveStatusEl.style.background = isConnected ? '#d1e7dd' : '#fff3cd'; driveStatusEl.style.color = isConnected ? '#0f5132' : '#664d03'; }
-
+        function updateDriveStatus(message, isConnected = false) { driveStatusEl.style.display = 'block'; driveStatusEl.textContent = message; driveStatusEl.style.backgroundColor = isConnected ? '#d1e7dd' : '#fff3cd'; driveStatusEl.style.color = isConnected ? '#0f5132' : '#664d03'; }
         function handleAuthClick() {
             tokenClient.callback = async (resp) => {
                 if (resp.error) throw (resp);
@@ -513,9 +462,8 @@
         async function saveDataToDrive() {
             if (!confirm('¿Guardar los datos actuales en Google Drive?')) return;
             updateDriveStatus('Guardando datos en Drive...', false);
-            const content = JSON.stringify(siniestrosData, null, 2);
             try {
-                const fileMetadata = await uploadFileContent(content, DATA_FILE_NAME, 'application/json', null, dataFileId);
+                const fileMetadata = await uploadFileContent(JSON.stringify(siniestrosData, null, 2), DATA_FILE_NAME, 'application/json', null, dataFileId);
                 dataFileId = fileMetadata.id;
                 updateDriveStatus('✅ ¡Datos guardados en Drive con éxito!', true);
             } catch (err) { console.error(err); updateDriveStatus('❌ Error al guardar en Drive.', false); }
@@ -526,9 +474,8 @@
             updateDriveStatus('Cargando datos desde Drive...', false);
             try {
                 const response = await gapi.client.drive.files.get({ fileId: dataFileId, alt: 'media' });
-                const importedData = JSON.parse(response.body);
-                if (!Array.isArray(importedData)) throw new Error('Formato no válido.');
-                siniestrosData = importedData; saveData(); renderAll();
+                if (!Array.isArray(response.result)) throw new Error('Formato no válido.');
+                siniestrosData = response.result; saveData(); renderAll();
                 updateDriveStatus('✅ Datos cargados desde Drive con éxito.', true);
             } catch (err) { console.error(err); updateDriveStatus('❌ Error al cargar desde Drive.', false); }
         }
@@ -537,9 +484,7 @@
             if (parentId) query += ` and '${parentId}' in parents`;
             const response = await gapi.client.drive.files.list({ q: query, fields: 'files(id)' });
             if (response.result.files.length > 0) return response.result.files[0].id;
-            const fileMetadata = { name, mimeType: 'application/vnd.google-apps.folder' };
-            if (parentId) fileMetadata.parents = [parentId];
-            const newFolder = await gapi.client.drive.files.create({ resource: fileMetadata, fields: 'id' });
+            const newFolder = await gapi.client.drive.files.create({ resource: { name, mimeType: 'application/vnd.google-apps.folder', parents: parentId ? [parentId] : [] }, fields: 'id' });
             return newFolder.result.id;
         }
         async function showDocumentModal(siniestroId) {
@@ -576,15 +521,12 @@
             } catch (err) { console.error(err); alert("Error al subir."); showDocumentModal(currentSiniestroIdForDocs); }
         }
         function uploadFileContent(content, fileName, mimeType, parentId, fileIdToUpdate) {
-            let contentToUpload, contentTypeForRequest;
-            if (typeof content === 'string') { contentToUpload = content; contentTypeForRequest = mimeType; } else { contentToUpload = new Uint8Array(content).reduce((data, byte) => data + String.fromCharCode(byte), ''); contentTypeForRequest = mimeType; }
             const boundary = '-------314159265358979323846', delimiter = `\r\n--${boundary}\r\n`, close_delim = `\r\n--${boundary}--`;
             const metadata = { name: fileName, mimeType: mimeType };
             if (parentId) metadata.parents = [parentId];
-            const multipartRequestBody = delimiter + 'Content-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(metadata) + delimiter + `Content-Type: ${contentTypeForRequest}\r\n` + (typeof content === 'string' ? '' : 'Content-Transfer-Encoding: base64\r\n') + '\r\n' + (typeof content === 'string' ? contentToUpload : btoa(contentToUpload)) + close_delim;
+            const multipartRequestBody = delimiter + 'Content-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(metadata) + delimiter + `Content-Type: ${mimeType}\r\nContent-Transfer-Encoding: base64\r\n\r\n` + btoa(content) + close_delim;
             const path = fileIdToUpdate ? `/upload/drive/v3/files/${fileIdToUpdate}` : '/upload/drive/v3/files';
-            const method = fileIdToUpdate ? 'PATCH' : 'POST';
-            return gapi.client.request({ path: path, method: method, params: { uploadType: 'multipart' }, headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body: multipartRequestBody }).then(response => response.result);
+            return gapi.client.request({ path, method: fileIdToUpdate ? 'PATCH' : 'POST', params: { uploadType: 'multipart' }, headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body: multipartRequestBody }).then(r => r.result);
         }
     </script>
 </body>
