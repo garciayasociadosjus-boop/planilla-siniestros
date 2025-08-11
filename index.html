@@ -197,6 +197,7 @@
         let siniestrosData = [];
         let editingSiniestroId = null, editingField = null;
 
+        // --- CORE FUNCTIONS ---
         function saveData() { localStorage.setItem('planilla_siniestros_data', JSON.stringify(siniestrosData)); updateDataStatus('✅ Datos guardados'); }
         function loadData() {
             const savedData = localStorage.getItem('planilla_siniestros_data');
@@ -209,7 +210,7 @@
             let sanitized = false;
             data.forEach(s => {
                 if (!s.id) { s.id = generateId(s); sanitized = true; }
-                if (!s.observaciones) { s.observaciones = []; sanitized = true; }
+                if (!Array.isArray(s.observaciones)) { s.observaciones = []; sanitized = true; }
                 s.observaciones.forEach(obs => {
                     if (!obs.id) { obs.id = generateId({}); sanitized = true; }
                     if (typeof obs.completed === 'undefined') { obs.completed = false; sanitized = true; }
@@ -225,40 +226,39 @@
             el.style.background = isError ? '#f8d7da' : '#d4edda';
             el.style.color = isError ? '#721c24' : '#155724';
         }
-        
-        // --- NEW DATE LOGIC ---
-        function getDateAsNumber(dateString) {
-            if (!dateString || typeof dateString !== 'string') return null;
-            return parseInt(dateString.replace(/-/g, ''), 10);
-        }
-        function getTodayAsNumber() {
+
+        // --- DATE LOGIC (REWRITTEN) ---
+        function getTodayAsYMD() {
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
-            return parseInt(`${year}${month}${day}`, 10);
+            return `${year}-${month}-${day}`;
         }
+        const todayYMD = getTodayAsYMD();
+
         function formatDate(dateString) {
             if (!dateString) return 'No definida';
-            const [year, month, day] = dateString.split('-');
-            return `${day}/${month}/${year}`;
+            const parts = dateString.split('-');
+            if (parts.length !== 3) return 'Fecha inválida';
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
         }
-        function isToday(dateString) { return getDateAsNumber(dateString) === getTodayAsNumber(); }
-        function isPastDue(dateString) { return getDateAsNumber(dateString) < getTodayAsNumber(); }
-        // --- END OF NEW DATE LOGIC ---
+        // --- END OF DATE LOGIC ---
 
+        // --- UTILITY FUNCTIONS ---
         function generateId(item) { return `SIN_${(item.cliente || 'S').slice(0,3).toUpperCase()}_${Date.now()}`; }
         function getDisplayName(s) { return `${s.cliente} - Reclamo: ${s.numeroReclamo || 'S/N'} (${s.estado})`; }
         function formatCurrency(amount) { if (!amount) return 'S/D'; return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount); }
         
+        // --- DATA MANIPULATION ---
         function updateSiniestroNextRevision(siniestro) {
-            const futureObs = (siniestro.observaciones || [])
+            const pendingTasks = (siniestro.observaciones || [])
                 .filter(obs => !obs.completed && obs.proximaRevision)
-                .sort((a, b) => getDateAsNumber(a.proximaRevision) - getDateAsNumber(b.proximaRevision));
+                .sort((a, b) => a.proximaRevision.localeCompare(b.proximaRevision));
             
-            if (futureObs.length > 0) {
-                siniestro.fechaRevision = futureObs[0].proximaRevision;
-                siniestro.observacion = futureObs[0].texto;
+            if (pendingTasks.length > 0) {
+                siniestro.fechaRevision = pendingTasks[0].proximaRevision;
+                siniestro.observacion = pendingTasks[0].texto;
             } else {
                 siniestro.fechaRevision = '';
                 siniestro.observacion = 'No hay tareas pendientes';
@@ -267,14 +267,14 @@
         function toggleCompleted(event, siniestroId, obsId) {
             event.stopPropagation();
             const siniestro = siniestrosData.find(s => s.id === siniestroId);
-            if (!siniestro) return;
             const obs = siniestro.observaciones.find(o => o.id === obsId);
-            if (!obs) return;
             obs.completed = !obs.completed;
             updateSiniestroNextRevision(siniestro);
             saveData();
             renderAll();
         }
+        
+        // --- RENDER FUNCTIONS ---
         function renderAll() {
             siniestrosData.forEach(updateSiniestroNextRevision);
             renderDashboardLists();
@@ -282,9 +282,12 @@
         }
         function renderDashboardLists() {
             const allTasks = siniestrosData.flatMap(siniestro => (siniestro.observaciones || []).map(obs => ({...obs, siniestro})));
-            const todayTasks = allTasks.filter(task => !task.completed && isToday(task.proximaRevision));
-            const overdueTasks = allTasks.filter(task => !task.completed && isPastDue(task.proximaRevision)).sort((a,b) => getDateAsNumber(a.proximaRevision) - getDateAsNumber(b.proximaRevision));
-            const upcomingTasks = allTasks.filter(task => !task.completed && !isToday(task.proximaRevision) && !isPastDue(task.proximaRevision)).sort((a,b) => getDateAsNumber(a.proximaRevision) - getDateAsNumber(b.proximaRevision));
+            
+            const todayTasks = allTasks.filter(task => !task.completed && task.proximaRevision === todayYMD);
+            const overdueTasks = allTasks.filter(task => !task.completed && task.proximaRevision && task.proximaRevision < todayYMD)
+                .sort((a,b) => a.proximaRevision.localeCompare(b.proximaRevision));
+            const upcomingTasks = allTasks.filter(task => !task.completed && task.proximaRevision && task.proximaRevision > todayYMD)
+                .sort((a,b) => a.proximaRevision.localeCompare(b.proximaRevision));
 
             renderReviewList('todayReviews', todayTasks, 'No hay revisiones para hoy', 'today');
             renderReviewList('overdueReviews', overdueTasks, 'No hay revisiones vencidas', 'overdue');
@@ -308,22 +311,20 @@
                 const matchesSearch = !searchTerm || Object.values(s).some(val => String(val).toLowerCase().includes(searchTerm));
                 const matchesEstado = !estadoFilter || s.estado === estadoFilter;
                 return matchesSearch && matchesEstado;
-            }).sort((a, b) => (getDateAsNumber(a.fechaRevision) || 0) - (getDateAsNumber(b.fechaRevision) || 0));
+            }).sort((a, b) => (a.fechaRevision || '9999').localeCompare(b.fechaRevision || '9999'));
 
             document.getElementById('allSiniestros').innerHTML = filteredData.length === 0 ? '<p>No se encontraron siniestros.</p>' : filteredData.map(s => {
                 const hasPendingTask = (s.observaciones || []).some(obs => !obs.completed && obs.proximaRevision);
-                const classes = `review-item ${!hasPendingTask ? 'completed' : ''} ${isToday(s.fechaRevision) ? 'today' : ''} ${isPastDue(s.fechaRevision) ? 'overdue' : ''}`;
+                let classes = 'review-item';
+                if (!hasPendingTask) classes += ' completed';
+                if (s.fechaRevision === todayYMD) classes += ' today';
+                else if (s.fechaRevision && s.fechaRevision < todayYMD) classes += ' overdue';
+
                 return `<div class="${classes}" onclick="showSiniestroModal('${s.id}')"><div class="review-item-content"><div class="review-date">Próx. Revisión: ${formatDate(s.fechaRevision)}</div><div class="review-client">${s.cliente} - Reclamo: ${s.numeroReclamo || 'S/N'}</div><div class="review-obs">Últ. Tarea: ${s.observacion}</div></div></div>`;
             }).join('');
         }
-        function showNewSiniestroModal() { document.getElementById('newSiniestroModal').classList.add('active'); }
-        function showSiniestroSelectorModal() {
-            const selector = document.getElementById('siniestroSelector');
-            selector.innerHTML = '<option value="">-- Seleccionar --</option>' + [...siniestrosData].sort((a,b) => a.cliente.localeCompare(b.cliente)).map(s => `<option value="${s.id}">${getDisplayName(s)}</option>`).join('');
-            document.getElementById('siniestroSelectorModal').classList.add('active');
-        }
-        function loadSiniestroInfo() { const siniestroId = document.getElementById('siniestroSelector').value; if (siniestroId) { closeModal('siniestroSelectorModal'); showSiniestroModal(siniestroId); } }
-        function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); editingSiniestroId = null; editingField = null; }
+        
+        // --- MODAL AND UI FUNCTIONS ---
         function showSiniestroModal(siniestroId) {
             const siniestro = siniestrosData.find(s => s.id === siniestroId);
             if (!siniestro) return;
@@ -350,7 +351,7 @@
             document.getElementById('siniestroInfoModal').classList.add('active');
         }
         function renderObsList(siniestro) {
-            return (siniestro.observaciones || []).length === 0 ? '<p>No hay tareas.</p>' : [...siniestro.observaciones].sort((a,b) => (getDateAsNumber(b.fecha) || 0) - (getDateAsNumber(a.fecha) || 0)).map(obs => {
+            return (siniestro.observaciones || []).length === 0 ? '<p>No hay tareas.</p>' : [...siniestro.observaciones].sort((a,b) => (b.fecha || '').localeCompare(a.fecha || '')).map(obs => {
                 const isNextTask = obs.proximaRevision === siniestro.fechaRevision && obs.texto === siniestro.observacion && !obs.completed;
                 return `<div id="obs-item-${obs.id}" class="obs-item ${obs.completed ? 'completed' : ''}" style="${isNextTask ? 'border-left-color: #e74c3c;' : ''}">
                     <div class="obs-date">Creación: ${formatDate(obs.fecha)}</div>
@@ -418,13 +419,7 @@
             const obsText = document.getElementById('newObsText').value;
             const revDate = document.getElementById('newRevisionDate').value;
             if (obsText && revDate) {
-                const today = new Date();
-                const year = today.getFullYear();
-                const month = String(today.getMonth() + 1).padStart(2, '0');
-                const day = String(today.getDate()).padStart(2, '0');
-                const creationDate = `${year}-${month}-${day}`;
-
-                siniestro.observaciones.push({ id: generateId({}), fecha: creationDate, texto: obsText, proximaRevision: revDate, completed: false });
+                siniestro.observaciones.push({ id: generateId({}), fecha: getTodayAsYMD(), texto: obsText, proximaRevision: revDate, completed: false });
                 updateSiniestroNextRevision(siniestro);
                 saveData(); 
                 renderAll(); 
@@ -433,6 +428,8 @@
                 alert("Por favor, completa el texto y la fecha de revisión.");
             }
         }
+        
+        // --- IMPORT/EXPORT FUNCTIONS ---
         function exportToExcel() {
             const excelData = siniestrosData.map(s => {
                 const allObs = (s.observaciones || []).map(obs => `${formatDate(obs.fecha)} (Rev: ${formatDate(obs.proximaRevision)}): ${obs.texto}`).join(' | ');
@@ -441,9 +438,9 @@
             const worksheet = XLSX.utils.json_to_sheet(excelData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Siniestros');
-            XLSX.writeFile(workbook, `Siniestros_${new Date().toISOString().split('T')[0]}.xlsx`);
+            XLSX.writeFile(workbook, `Siniestros_${getTodayAsYMD()}.xlsx`);
         }
-        function exportData() { const dataStr = JSON.stringify(siniestrosData, null, 2); const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([dataStr], {type: 'application/json'})); link.download = `siniestros_${new Date().toISOString().split('T')[0]}.json`; link.click(); }
+        function exportData() { const dataStr = JSON.stringify(siniestrosData, null, 2); const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([dataStr], {type: 'application/json'})); link.download = `siniestros_${getTodayAsYMD()}.json`; link.click(); }
         function importData() { document.getElementById('importInput').click(); }
         function handleImport(event) {
             const file = event.target.files[0]; if (!file) return;
@@ -451,6 +448,8 @@
             reader.onload = e => { try { const imported = JSON.parse(e.target.result); if (Array.isArray(imported) && confirm(`Importar ${imported.length} registros?`)) { siniestrosData = imported; saveData(); renderAll(); } } catch (err) { alert('Error al importar.'); } };
             reader.readAsText(file); event.target.value = '';
         }
+        
+        // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('newSiniestroModal').querySelector('.modal-content').innerHTML = `<span class="close" onclick="closeModal('newSiniestroModal')">&times;</span><h2>➕ Agregar Nuevo Siniestro</h2><form id="newSiniestroForm"><div class="info-grid"><div class="form-group"><label>Cliente *</label><input type="text" id="newCliente" required></div><div class="form-group"><label>DNI</label><input type="number" id="newDni"></div><div class="form-group"><label>Celular</label><input type="tel" id="newCelular"></div><div class="form-group"><label>Estado *</label><select id="newEstado" required><option value="EJECUCION">En Ejecución</option><option value="FINALIZADA">Finalizada</option><option value="FINALIZADA P">Finalizada P</option><option value="RECHAZADO">Rechazado</option><option value="DEMORADA">Demorada</option></select></div><div class="form-group"><label>Asegurado En</label><input type="text" id="newAseguradoEn"></div><div class="form-group"><label>Contra</label><input type="text" id="newContra"></div><div class="form-group"><label>N° Reclamo</label><input type="text" id="newNumeroReclamo"></div><div class="form-group"><label>Presupuesto</label><input type="number" id="newPresupuesto"></div></div><div class="form-group"><label>Tarea Inicial</label><textarea id="newObservacion" rows="3"></textarea></div><div class="form-group"><label>Fecha de Revisión</label><input type="date" id="newFechaRevision"></div><div style="text-align:center;"><button type="submit" class="btn btn-success">💾 Guardar</button></div></form>`;
             document.getElementById('siniestroSelectorModal').querySelector('.modal-content').innerHTML = `<span class="close" onclick="closeModal('siniestroSelectorModal')">&times;</span><h2>👁️ Seleccionar Siniestro</h2><div class="form-group"><select id="siniestroSelector" onchange="loadSiniestroInfo()"></select></div>`;
@@ -461,12 +460,7 @@
                 const obsText = document.getElementById('newObservacion').value;
                 const revDate = document.getElementById('newFechaRevision').value;
                 if (obsText && revDate) {
-                    const today = new Date();
-                    const year = today.getFullYear();
-                    const month = String(today.getMonth() + 1).padStart(2, '0');
-                    const day = String(today.getDate()).padStart(2, '0');
-                    const creationDate = `${year}-${month}-${day}`;
-                    newSiniestro.observaciones.push({ id: generateId({}), fecha: creationDate, texto: obsText, proximaRevision: revDate, completed: false }); 
+                    newSiniestro.observaciones.push({ id: generateId({}), fecha: getTodayAsYMD(), texto: obsText, proximaRevision: revDate, completed: false }); 
                 }
                 updateSiniestroNextRevision(newSiniestro);
                 siniestrosData.push(newSiniestro);
