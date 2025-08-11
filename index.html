@@ -224,10 +224,11 @@
             el.style.background = isError ? '#f8d7da' : '#d4edda';
             el.style.color = isError ? '#721c24' : '#155724';
         }
-        function formatDate(dateString) { if (!dateString) return 'No definida'; return new Date(dateString + 'T00:00:00').toLocaleDateString('es-AR', { timeZone: 'UTC' }); }
+
+        // --- CORRECTED DATE LOGIC (FROM JURIDICA) ---
         function getTodayYMD() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
         const todayYMD = getTodayYMD();
-
+        function formatDate(dateString) { if (!dateString) return 'No definida'; const [year, month, day] = dateString.split('-'); return `${day}/${month}/${year}`; }
         function isToday(dateString) { if (!dateString) return false; return dateString === todayYMD; }
         function isPastDue(dateString) { if (!dateString) return false; return dateString < todayYMD; }
         function getDaysDifference(dateString) { if (!dateString) return 999; const today = new Date(todayYMD); const target = new Date(dateString); return Math.ceil((target - today) / (1000 * 60 * 60 * 24)); }
@@ -342,7 +343,6 @@
             document.getElementById('siniestroInfoModal').classList.add('active');
         }
 
-        // *** FUNCTIONS FOR EDITING AND DELETING TASKS ***
         function renderObsList(siniestro) {
             return (siniestro.observaciones || []).length > 0 ? [...siniestro.observaciones].sort((a, b) => b.proximaRevision.localeCompare(a.proximaRevision)).map(obs => {
                 const isNextTask = obs.proximaRevision === siniestro.fechaRevision && !obs.completed;
@@ -388,7 +388,6 @@
             renderAll();
             showSiniestroModal(siniestroId);
         }
-        // *** END OF TASK FUNCTIONS ***
 
         function editField(siniestroId, fieldName, currentValue) {
             editingSiniestroId = siniestroId; editingField = fieldName;
