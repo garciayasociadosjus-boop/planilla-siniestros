@@ -343,6 +343,10 @@
                         <div class="info-item"><div class="info-label">Próxima Tarea</div><div class="info-value" style="color: #e74c3c; font-weight: bold;">${formatDate(siniestro.fechaRevision)}</div></div>
                     </div>
                 </div>
+                <div style="text-align: center; margin: 20px 0;">
+                    <button class="btn btn-info btn-sm" onclick="printClientData('${siniestro.id}')">🖨️ Imprimir Ficha</button>
+                    <button class="btn btn-warning btn-sm" onclick="printClientHistory('${siniestro.id}')">📄 Imprimir Historial</button>
+                </div>
                 <div class="observations-history">
                     <h4>📝 Historial de Tareas</h4>
                     <div id="obs-list-${siniestro.id}" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;">
@@ -418,6 +422,121 @@
             editingSiniestroId = null; editingField = null;
         }
         function deleteSiniestro(id) { if (confirm('¿Eliminar este siniestro?')) { siniestrosData = siniestrosData.filter(s => s.id !== id); saveData(); renderAll(); closeModal('siniestroInfoModal'); } }
+        
+        function printClientData(siniestroId) {
+            const siniestro = siniestrosData.find(s => s.id === siniestroId);
+            if (!siniestro) return;
+            
+            const printWindow = window.open('', '_blank');
+            const content = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Ficha de Cliente - ${siniestro.cliente}</title>
+                    <style>
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; }
+                        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #2c3e50; padding-bottom: 20px; }
+                        .header h1 { color: #2c3e50; margin-bottom: 5px; }
+                        .header h2 { color: #667eea; margin-top: 5px; }
+                        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
+                        .info-item { padding: 10px; border: 1px solid #e0e0e0; border-radius: 5px; }
+                        .info-label { font-size: 0.8em; color: #666; text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
+                        .info-value { font-size: 1em; color: #2c3e50; font-weight: 500; }
+                        .single-item { grid-column: 1 / -1; background: #f8f9fa; }
+                        @media print { body { margin: 0; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>🏥 Planilla de Siniestros</h1>
+                        <h2>Ficha de Cliente: ${siniestro.cliente}</h2>
+                        <p>García & Asociados - ${new Date().toLocaleDateString('es-AR')}</p>
+                    </div>
+                    <div class="info-grid">
+                        ${Object.entries({
+                            cliente: 'Cliente', 
+                            dni: 'DNI', 
+                            celular: 'Celular', 
+                            estado: 'Estado', 
+                            aseguradoEn: 'Asegurado En', 
+                            contra: 'Contra', 
+                            numeroReclamo: 'N° Reclamo', 
+                            presupuesto: 'Presupuesto', 
+                            indemnizacion: 'Indemnización', 
+                            honorarios: 'Honorarios', 
+                            acuerdo: 'Acuerdo', 
+                            fechaPago: 'Fecha Pago', 
+                            factura: 'Factura'
+                        }).map(([key, label]) => `
+                            <div class="info-item">
+                                <div class="info-label">${label}</div>
+                                <div class="info-value">${key.includes('presupuesto') || key.includes('indemnizacion') || key.includes('honorarios') ? formatCurrency(siniestro[key]) : (siniestro[key] || 'S/D')}</div>
+                            </div>
+                        `).join('')}
+                        <div class="info-item single-item">
+                            <div class="info-label">Próxima Tarea</div>
+                            <div class="info-value" style="color: #e74c3c; font-weight: bold;">${formatDate(siniestro.fechaRevision)}</div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+            printWindow.document.write(content);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => printWindow.print(), 250);
+        }
+        
+        function printClientHistory(siniestroId) {
+            const siniestro = siniestrosData.find(s => s.id === siniestroId);
+            if (!siniestro) return;
+            
+            const printWindow = window.open('', '_blank');
+            const content = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Historial de Observaciones - ${siniestro.cliente}</title>
+                    <style>
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; }
+                        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #2c3e50; padding-bottom: 20px; }
+                        .header h1 { color: #2c3e50; margin-bottom: 5px; }
+                        .header h2 { color: #667eea; margin-top: 5px; }
+                        .obs-item { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+                        .obs-date { font-size: 0.9em; color: #667eea; font-weight: 600; margin-bottom: 5px; }
+                        .obs-text { color: #2c3e50; margin-bottom: 8px; }
+                        .obs-revision-date { font-size: 0.8em; color: #c0392b; font-weight: 500; }
+                        .no-tasks { text-align: center; color: #666; font-style: italic; padding: 20px; }
+                        @media print { body { margin: 0; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>🏥 Planilla de Siniestros</h1>
+                        <h2>Historial de Tareas: ${siniestro.cliente}</h2>
+                        <p>García & Asociados - ${new Date().toLocaleDateString('es-AR')}</p>
+                        <p><strong>Reclamo:</strong> ${siniestro.numeroReclamo || 'S/N'} | <strong>DNI:</strong> ${siniestro.dni || 'S/D'}</p>
+                    </div>
+                    <div class="history">
+                        ${(siniestro.observaciones || []).length > 0 ? 
+                            [...siniestro.observaciones].sort((a, b) => (b.proximaRevision || '').localeCompare(a.proximaRevision || '')).map(obs => `
+                                <div class="obs-item">
+                                    <div class="obs-date">Creación: ${formatDate(obs.fecha)}</div>
+                                    <div class="obs-text">${obs.texto}</div>
+                                    <div class="obs-revision-date">Revisión: ${formatDate(obs.proximaRevision)}</div>
+                                </div>
+                            `).join('') : 
+                            '<div class="no-tasks">No hay tareas registradas.</div>'
+                        }
+                    </div>
+                </body>
+                </html>
+            `;
+            printWindow.document.write(content);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => printWindow.print(), 250);
+        }
         function addObservation(event, siniestroId) {
             event.preventDefault();
             const siniestro = siniestrosData.find(s => s.id === siniestroId);
